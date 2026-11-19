@@ -19,7 +19,7 @@ export default defineConfig({
       server: { entry: "server" },
       importProtection: { behavior: "error", client: { files: ["**/server/**"], specifiers: ["server-only"] } },
     }),
-    nitro({ preset: "node-server" }),
+    nitro({ preset: "vercel" }),,
     viteReact(),
   ],
 });
