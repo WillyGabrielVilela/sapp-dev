@@ -48,3 +48,7 @@ Veja `docs/juridico-fase1.md`.
 
 ## Modo de teste
 Com `MODO_TESTE=true`, o Jurídico vê em processos "aguardando defesa" o botão **Teste: vencer o prazo (−15 dias)**, que recua as datas para permitir testar "encerrar sem defesa" sem esperar. O ajuste fica no histórico com o prefixo `TESTE:`. **Não ligue em produção.**
+
+## Vercel
+O build detecta a Vercel (`VERCEL=1`) e gera `.vercel/output`; o `vercel.json` já define "Other" como framework (sem pasta `dist`). Configure as variáveis do `.env.example` em *Project Settings → Environment Variables*.
+**Limitações na Vercel:** o disco é efêmero, então use `STORAGE_DRIVER=s3` (o modo `local` perde os PDFs); e o corpo de uma requisição em função serverless é limitado (~4,5 MB), então PDFs maiores do JR5260 podem falhar no envio. Rode `npm run db:migrar` do seu computador (o deploy não aplica migrações).
