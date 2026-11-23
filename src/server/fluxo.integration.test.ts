@@ -141,7 +141,7 @@ describe.skipIf(!habilitado)("fluxo CCA → CPMA → Jurídico (PostgreSQL real)
     // 01/10 (qui) +10 = 11/10 (dom) → 12/10 (seg); 05/10 (seg) +10 = 15/10 (qui); 06/10 (ter) +10 = 16/10 (sex)
     expect(r.map((x) => x.v)).toEqual(["2026-10-12", "2026-10-15", "2026-10-16"]);
     const [p1] = ids as [string];
-    await falha(u["jur"], "select encerrar_prazo_defesa($1)", [p1], /vai até/);
+    await falha(u["jur"], "select encerrar_prazo_defesa($1)", [p1], /informe o motivo/);
     await falha(u["jur"], "select registrar_defesa($1, hoje() - 5)", [p1], /anterior à ciência/);
     await pool().query("update processos set ciencia_em = hoje() - 20, vencimento_defesa = hoje() - 10 where id = $1", [p1]);
     await sql(u["jur"], "select encerrar_prazo_defesa($1)", [p1]);
@@ -261,6 +261,18 @@ describe.skipIf(!habilitado)("fluxo CCA → CPMA → Jurídico (PostgreSQL real)
     expect(fim!.situacao).toBe("com_defesa");
     const [e2] = await sql<{ observacao: string }>(u["jur"], "select observacao from eventos where processo_id = $1 and tipo = 'DEFESA_REGISTRADA' order by id desc limit 1", [p3]);
     expect(e2!.observacao).toMatch(/FORA DO PRAZO/);
+  });
+
+  it("registro manual sem defesa: antes do vencimento exige motivo e deixa rastro", async () => {
+    const [, , p3] = ids as [string, string, string];
+    await pool().query("update processos set situacao = 'aguardando_defesa', ciencia_em = hoje(), vencimento_defesa = hoje() + 8 where id = $1", [p3]);
+    await falha(u["jur"], "select encerrar_prazo_defesa($1, 'curto')", [p3], /informe o motivo/);
+    await falha(u["cpma"], "select encerrar_prazo_defesa($1, 'renúncia expressa ao prazo')", [p3], /Permissão negada/);
+    await sql(u["jur"], "select encerrar_prazo_defesa($1, 'Autuado renunciou expressamente ao prazo')", [p3]);
+    const [e] = await sql<{ observacao: string }>(u["jur"], "select observacao from eventos where processo_id = $1 and tipo = 'PRAZO_ENCERRADO' order by id desc limit 1", [p3]);
+    expect(e!.observacao).toMatch(/antes do vencimento.*renunciou/);
+    const [st] = await sql<{ situacao: string }>(u["jur"], "select situacao from processos where id = $1", [p3]);
+    expect(st!.situacao).toBe("sem_defesa");
   });
 
   it("histórico é imutável e inclui toda a trilha", async () => {

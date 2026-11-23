@@ -63,7 +63,7 @@ Cada processo mostra "No SGI deve constar em": Processos cadastrados (digitaliza
 - Cobrança: **dívida ativa** é a etapa seguinte.
 
 ## Prazo de defesa automático
-Vencido o prazo de defesa sem defesa registrada, o processo passa **sozinho** para `sem_defesa`, com evento "automático" atribuído ao ator **Sistema**. Não há agendador: a rotina `encerrar_prazos_vencidos()` roda sempre que o sistema lista ou abre processos (o que acontece em toda sessão de trabalho). Se uma defesa chegar depois (ex.: pelos Correios) e o processo ainda não tiver sido julgado, ela pode ser registrada e fica marcada "FORA DO PRAZO". O botão manual "Encerrar prazo sem defesa" foi removido da tela.
+Vencido o prazo de defesa sem defesa registrada, o processo passa **sozinho** para `sem_defesa`, com evento "automático" atribuído ao ator **Sistema**. Não há agendador: a rotina `encerrar_prazos_vencidos()` roda sempre que o sistema lista ou abre processos (o que acontece em toda sessão de trabalho). Se uma defesa chegar depois (ex.: pelos Correios) e o processo ainda não tiver sido julgado, ela pode ser registrada e fica marcada "FORA DO PRAZO". Há também o botão **Registrar sem defesa** (processo aguardando defesa): depois do vencimento basta confirmar; **antes do vencimento** exige o motivo (ex.: renúncia expressa ao prazo), que fica no histórico (migração 0007). Regra a validar com a GEJUR.
 
 ## Fase 3 (a implementar): GRU pela Gerência Jurídica
 Hoje o processo assinado aparece na fila "A gerar a GRU". Faltam os dados da guia (código de recolhimento, unidade gestora, vencimento, número de referência etc.), definição do desconto de 30% à vista e do fluxo Correios → recurso (instância superior do Inmetro; prazo indefinido) → dívida ativa.

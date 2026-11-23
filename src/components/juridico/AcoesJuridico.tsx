@@ -7,13 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { anteciparPrazoFn, atualizarDadosFn, modoTesteFn, protocolarFn, registrarDefesaFn } from "@/lib/juridico.functions";
+import { anteciparPrazoFn, atualizarDadosFn, encerrarPrazoFn, modoTesteFn, protocolarFn, registrarDefesaFn } from "@/lib/juridico.functions";
 import { documentoValido, normalizarDocumento } from "@/lib/documento";
 import { dataBR, erroMsg } from "@/lib/rotulos";
 import type { Notificacao, Processo } from "@/lib/tipos";
 import { hojeISO, ResultadoDialog } from "./ResultadoDialog";
 
-type Dialogo = null | "protocolar" | "dados" | "defesa" | "resultado";
+type Dialogo = null | "protocolar" | "dados" | "defesa" | "semdefesa" | "resultado";
 
 /** Providências do Jurídico (fase 1) para o processo aberto: protocolo → notificação → ciência → defesa. */
 export function AcoesJuridico({ p, notificacoes }: { p: Processo; notificacoes: Notificacao[] }) {
@@ -41,6 +41,7 @@ export function AcoesJuridico({ p, notificacoes }: { p: Processo; notificacoes: 
         <Button asChild><Link to="/juridico">Incluir em lista de saída</Link></Button>
       )}
       {p.situacao === "notificacao_enviada" && pendente && <Button onClick={() => setDialogo("resultado")}>Registrar entrega</Button>}
+      {p.situacao === "aguardando_defesa" && <Button variant="outline" onClick={() => setDialogo("semdefesa")}>Registrar sem defesa</Button>}
       {(p.situacao === "aguardando_defesa" || p.situacao === "sem_defesa") && (
         <Button variant={p.situacao === "sem_defesa" ? "outline" : "default"} onClick={() => setDialogo("defesa")}>
           {p.situacao === "sem_defesa" ? "Registrar defesa recebida" : "Registrar defesa"}
@@ -58,6 +59,7 @@ export function AcoesJuridico({ p, notificacoes }: { p: Processo; notificacoes: 
       {dialogo === "resultado" && pendente && (
         <ResultadoDialog notificacaoId={pendente.id} canal={pendente.canal} titulo={p.numero} dataSaida={pendente.data_saida} fechar={fechar} />
       )}
+      {dialogo === "semdefesa" && <SemDefesaDialog p={p} fechar={fechar} depois={depoisDe} />}
       {dialogo === "defesa" && <DefesaDialog p={p} fechar={fechar} depois={depoisDe} />}
     </>
   );
@@ -135,6 +137,37 @@ function DefesaDialog({ p, fechar, depois }: { p: Processo; fechar: () => void; 
         <DialogFooter>
           <Button variant="outline" disabled={salvar.isPending} onClick={fechar}>Cancelar</Button>
           <Button disabled={salvar.isPending || !data} onClick={() => salvar.mutate()}>Registrar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SemDefesaDialog({ p, fechar, depois }: { p: Processo; fechar: () => void; depois: (m: string) => Promise<void> }) {
+  const [obs, setObs] = useState("");
+  const antes = !!p.vencimento_defesa && hojeISO() <= p.vencimento_defesa;
+  const salvar = useMutation({
+    mutationFn: () => encerrarPrazoFn({ data: { processoId: p.id, obs } }),
+    onSuccess: () => depois("Registrado sem defesa — segue para julgamento"),
+    onError: (e) => toast.error(erroMsg(e)),
+  });
+  return (
+    <Dialog open onOpenChange={(o) => !o && !salvar.isPending && fechar()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Registrar sem defesa</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">Ciência em {dataBR(p.ciencia_em)} · prazo até {dataBR(p.vencimento_defesa)}</p>
+        {antes ? (
+          <p className="rounded bg-warning px-2 py-1.5 text-xs text-warning-foreground">
+            O prazo ainda não venceu. Registrar agora exige o motivo (por exemplo, renúncia expressa ao prazo) e fica no histórico.
+          </p>
+        ) : (
+          <p className="text-sm">O prazo venceu sem defesa. Confirme para seguir ao julgamento.</p>
+        )}
+        <Label htmlFor="obs-sd">{antes ? "Motivo (obrigatório)" : "Observação (opcional)"}</Label>
+        <Textarea id="obs-sd" rows={3} value={obs} onChange={(e) => setObs(e.target.value)} />
+        <DialogFooter>
+          <Button variant="outline" disabled={salvar.isPending} onClick={fechar}>Cancelar</Button>
+          <Button disabled={salvar.isPending || (antes && obs.trim().length < 10)} onClick={() => salvar.mutate()}>Registrar sem defesa</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
