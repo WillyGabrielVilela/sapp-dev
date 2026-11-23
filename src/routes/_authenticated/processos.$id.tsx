@@ -118,8 +118,8 @@ function DetalheProcesso() {
                     ["Decisão", julgamento.decisao === "multa" ? `Multa de ${brl(julgamento.valor_multa)}` : "Arquivamento"],
                     ["Julgado por", `${perfis?.get(julgamento.julgador_id) ?? "—"} · ${dataBR(julgamento.julgado_em, true)}`],
                     ["Fundamentação", julgamento.fundamentacao],
-                    ["Assinatura do Presidente", julgamento.assinado_em ? `${perfis?.get(julgamento.assinado_por ?? "") ?? "—"} · ${dataBR(julgamento.assinado_em, true)}` : "Pendente"],
                     ["Homologação", julgamento.homologado_em ? `${perfis?.get(julgamento.homologado_por ?? "") ?? "—"} · ${dataBR(julgamento.homologado_em, true)}` : "Pendente"],
+                    ["Assinatura do Presidente", julgamento.assinado_em ? `${perfis?.get(julgamento.assinado_por ?? "") ?? "—"} · ${dataBR(julgamento.assinado_em, true)}` : "Pendente"],
                   ]
                 : []),
               ["No SGI deve constar em (conferir)", sgiEsperado(p.situacao)],
@@ -270,13 +270,14 @@ function proxima(p: { situacao: string; digitalizado_em: string | null; fiscal_i
     case "protocolado_juridico": return "Jurídico: incluir em uma lista de saída para notificar o autuado.";
     case "notificacao_enviada": return "Jurídico: registrar a entrega (data e quem recebeu) ou o motivo de não entrega. O prazo de defesa só corre depois disso.";
     case "notificacao_frustrada": return "Notificação não entregue. Corrija os dados se preciso e inclua em nova lista de saída (outro canal, se for o caso).";
-    case "aguardando_defesa": return "Prazo de defesa correndo. Registre a defesa ou, vencido o prazo, encerre sem defesa.";
+    case "aguardando_defesa": return "Prazo de defesa correndo. Se houver defesa, registre-a. Vencido o prazo sem defesa, o processo segue sozinho como \"sem defesa\".";
     case "com_defesa":
-    case "sem_defesa": return "Aguardando julgamento pelo advogado da espécie (decisão, valor da multa e fundamentação).";
+    case "sem_defesa": return "Aguardando julgamento pelo advogado (decisão, valor da multa e fundamentação). Se chegar uma defesa ainda não julgada, registre-a.";
     case "julgamento_devolvido": return "Devolvido ao julgamento: o advogado da espécie deve rejulgar.";
-    case "julgado": return "Julgado. Aguardando a assinatura do Presidente.";
-    case "assinado_presidente": return "Assinado pelo Presidente. Aguardando a homologação.";
-    case "homologado": return "Homologado. As próximas etapas (guia GRU, Correios, recurso, cobrança) ainda serão implementadas.";
+    case "julgado": return "Julgado. Aguardando a homologação.";
+    case "homologado": return "Homologado. Aguardando a assinatura do Presidente.";
+    case "assinado_presidente": return "Assinado pelo Presidente. Volta à Gerência Jurídica para gerar a GRU (fase 3, ainda não implementada).";
+    case "arquivado": return "Arquivado: decisão de arquivamento assinada pelo Presidente. Não há GRU.";
     case "aguardando_cca": return "O CCA deve confirmar o recebimento da devolução.";
     case "em_correcao_cca": return "CCA: corrigir o cadastro e reencaminhar ao CPMA.";
     default: return "—";

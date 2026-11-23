@@ -28,9 +28,10 @@ export const SITUACAO: Record<Situacao, string> = {
   com_defesa: "Com defesa — aguardando julgamento",
   sem_defesa: "Sem defesa — aguardando julgamento",
   julgamento_devolvido: "Devolvido ao julgamento",
-  julgado: "Julgado — aguardando assinatura do Presidente",
-  assinado_presidente: "Assinado — aguardando homologação",
-  homologado: "Homologado — aguarda a etapa da GRU",
+  julgado: "Julgado — aguardando homologação",
+  homologado: "Homologado — aguardando assinatura do Presidente",
+  assinado_presidente: "Assinado — com a Ger. Jurídica para gerar a GRU",
+  arquivado: "Arquivado",
 };
 
 export const SETOR_TECNICO: Record<SetorTecnico, string> = {
@@ -118,9 +119,10 @@ export function sgiEsperado(situacao: Situacao): string {
     case "sem_defesa":
     case "julgamento_devolvido":
     case "julgado":
-    case "assinado_presidente":
       return "Processos aptos para julgamento";
     case "homologado":
+    case "assinado_presidente":
+    case "arquivado":
       return "A definir com o Inmetro (pós-julgamento)";
   }
 }

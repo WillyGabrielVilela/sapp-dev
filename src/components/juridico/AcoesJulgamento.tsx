@@ -15,7 +15,7 @@ type Dialogo = null | "julgar" | "assinar" | "homologar" | "devolver";
 export const brl = (v: string | number | null) =>
   v == null ? "—" : Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-/** Julgamento (advogado da espécie) → assinatura (Presidente) → homologação. Cada botão só aparece para quem pode. */
+/** Julgamento (advogado) → homologação → assinatura (Presidente) → volta à Ger. Jurídica. Cada botão só aparece para quem pode. */
 export function AcoesJulgamento({ p, julgamento, papeis }: { p: Processo; julgamento: Julgamento | null; papeis: Papel[] }) {
   const qc = useQueryClient();
   const [dialogo, setDialogo] = useState<Dialogo>(null);
@@ -30,8 +30,8 @@ export function AcoesJulgamento({ p, julgamento, papeis }: { p: Processo; julgam
 
   const aJulgar = ["com_defesa", "sem_defesa", "julgamento_devolvido"].includes(p.situacao);
   const podeJulgar = tem("advogado") && aJulgar && !!p.especie && (minhas.length === 0 || minhas.includes(p.especie));
-  const podeAssinar = tem("presidente") && p.situacao === "julgado";
-  const podeHomologar = tem("homologador") && p.situacao === "assinado_presidente";
+  const podeHomologar = tem("homologador") && p.situacao === "julgado";
+  const podeAssinar = tem("presidente") && p.situacao === "homologado";
   const podeDevolver = podeAssinar || podeHomologar;
   const semDesignacao = tem("advogado") && aJulgar && !podeJulgar;
 
@@ -44,8 +44,8 @@ export function AcoesJulgamento({ p, julgamento, papeis }: { p: Processo; julgam
           {p.especie ? `Você não está designado para a espécie ${p.especie}.` : "Processo sem espécie."}
         </span>
       )}
-      {podeAssinar && <Button onClick={() => setDialogo("assinar")}>Assinar (Presidente)</Button>}
       {podeHomologar && <Button onClick={() => setDialogo("homologar")}>Homologar</Button>}
+      {podeAssinar && <Button onClick={() => setDialogo("assinar")}>Assinar (Presidente)</Button>}
       {podeDevolver && <Button variant="outline" onClick={() => setDialogo("devolver")}>Devolver ao julgamento</Button>}
 
       {dialogo === "julgar" && <JulgarDialog p={p} julgamento={julgamento} fechar={fechar} depois={feito} />}
@@ -78,7 +78,7 @@ function JulgarDialog({ p, julgamento, fechar, depois }: { p: Processo; julgamen
   const valorOk = decisao === "arquivamento" || (Number.isFinite(num) && num > 0);
   const salvar = useMutation({
     mutationFn: () => julgarFn({ data: { processoId: p.id, decisao, valor: decisao === "multa" ? num : null, fundamentacao: fund } }),
-    onSuccess: () => depois("Julgamento registrado — segue para a assinatura do Presidente"),
+    onSuccess: () => depois("Julgamento registrado — segue para a homologação"),
     onError: (e) => toast.error(erroMsg(e)),
   });
   return (

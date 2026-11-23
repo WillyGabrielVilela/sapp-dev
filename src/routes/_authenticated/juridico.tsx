@@ -46,14 +46,15 @@ function Juridico() {
     { titulo: "A protocolar", itens: por("recebido_juridico"), botao: () => "Protocolar" },
     { titulo: "A notificar · protocolados e notificações não entregues", itens: por("protocolado_juridico", "notificacao_frustrada"), seleciona: true, botao: () => "Abrir processo" },
     { titulo: "Entregas a registrar (notificação enviada)", itens: por("notificacao_enviada"), botao: () => "Registrar entrega" },
-    { titulo: "Prazo de defesa correndo", itens: por("aguardando_defesa"), botao: () => "Abrir processo" },
-    { titulo: "Com defesa ou sem defesa · aguardando julgamento (próxima etapa)", itens: por("com_defesa", "sem_defesa"), botao: () => "Abrir processo" },
+    { titulo: "Prazo de defesa correndo (segue sozinho se vencer sem defesa)", itens: por("aguardando_defesa"), botao: () => "Abrir processo" },
+    { titulo: "Com defesa ou sem defesa · aguardando julgamento dos advogados", itens: por("com_defesa", "sem_defesa", "julgamento_devolvido", "julgado", "homologado"), botao: () => "Abrir processo" },
+    { titulo: "A gerar a GRU (assinados pelo Presidente) · fase 3", itens: por("assinado_presidente"), botao: () => "Abrir processo" },
   ];
   const termo = busca.trim().toLocaleLowerCase("pt-BR");
   const casa = (p: Processo) => !termo || p.numero.includes(termo) || (p.numero_ai ?? "").includes(termo) || (p.proprietario ?? "").toLocaleLowerCase("pt-BR").includes(termo);
 
   return <>
-    <Cabecalho titulo="Jurídico" sub="Protocolo → notificação → ciência → prazo de defesa (julgamento, homologação, GRU e cobrança virão nas próximas etapas)" />
+    <Cabecalho titulo="Jurídico" sub="Protocolo → notificação → ciência → prazo de defesa (a GRU, os Correios, o recurso e a cobrança virão nas próximas etapas)" />
     <Input className="mb-6 max-w-xl" aria-label="Buscar processo no Jurídico" placeholder="Buscar por nº do processo, nº do AI ou nome do autuado" value={busca} onChange={(e) => setBusca(e.target.value)} />
     {error ? <p role="alert" className="text-destructive">Não foi possível carregar os processos.</p> : isLoading ? <p className="text-muted-foreground">Carregando processos…</p> :
       <div className="space-y-8">

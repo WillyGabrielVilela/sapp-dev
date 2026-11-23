@@ -37,11 +37,11 @@ Depois do protocolo o Jurídico não devolve mais ao CPMA. Julgamento, "divide p
 
 # Fase 2A — julgamento → assinatura do Presidente → homologação
 
-Regras confirmadas pelo IPEM-PE: advogados julgam **por espécie**; o advogado decide e atribui o **valor da multa**; o **Presidente assina**; a **homologação só vem depois da assinatura** (usuários com essa atribuição). Essa ordem difere do rascunho, em que "Homologa" vinha antes do Presidente.
+Regras confirmadas pelo IPEM-PE: o **advogado** julga, decide e atribui o **valor da multa**; encaminha ao **homologador**, que homologa; depois o **Presidente assina** e o processo **volta à Gerência Jurídica**, que gera a GRU (fase 3). (Uma conversa anterior havia indicado Presidente antes do homologador; a ordem final, igual à do rascunho, é a acima — migração 0006.)
 
 ## Fluxo
-`com_defesa` / `sem_defesa` → **Julgar** (usuário com perfil **Advogado**; julga todas as espécies por padrão, salvo restrição definida pelos homologadores: multa + valor, ou arquivamento; fundamentação obrigatória) → `julgado` → **Presidente assina** → `assinado_presidente` → **Homologador homologa** → `homologado`.
-Presidente (antes de assinar) e homologador (antes de homologar) podem **devolver ao julgamento** com justificativa → `julgamento_devolvido` → o advogado rejulga. Cada decisão, inclusive as revisadas, fica no histórico imutável.
+`com_defesa` / `sem_defesa` → **Julgar** (usuário com perfil **Advogado**; julga todas as espécies por padrão, salvo restrição definida pelos homologadores: multa + valor, ou arquivamento; fundamentação obrigatória) → `julgado` → **Homologador homologa** → `homologado` → **Presidente assina** → `assinado_presidente` (com a Ger. Jurídica, para gerar a GRU). Decisão de **arquivamento** assinada pelo Presidente vai a `arquivado` (encerrado, sem GRU).
+Homologador (antes de homologar) e Presidente (antes de assinar) podem **devolver ao julgamento** com justificativa → `julgamento_devolvido` → o advogado rejulga. Cada decisão, inclusive as revisadas, fica no histórico imutável.
 
 ## Perfis novos
 `advogado` (quem julga), `presidente` e `homologador`, atribuídos em *Usuários e perfis*. O perfil `juridico` continua sendo o do setor (receber, protocolar, notificar) e **não** julga.
@@ -61,3 +61,9 @@ Cada processo mostra "No SGI deve constar em": Processos cadastrados (digitaliza
 - GRU: **30% de desconto à vista** (o valor com desconto já aparece no julgamento, só como informação).
 - Recurso: julgado pela **instância superior do Inmetro**; **prazo indefinido** — precisa ser definido antes de implementar.
 - Cobrança: **dívida ativa** é a etapa seguinte.
+
+## Prazo de defesa automático
+Vencido o prazo de defesa sem defesa registrada, o processo passa **sozinho** para `sem_defesa`, com evento "automático" atribuído ao ator **Sistema**. Não há agendador: a rotina `encerrar_prazos_vencidos()` roda sempre que o sistema lista ou abre processos (o que acontece em toda sessão de trabalho). Se uma defesa chegar depois (ex.: pelos Correios) e o processo ainda não tiver sido julgado, ela pode ser registrada e fica marcada "FORA DO PRAZO". O botão manual "Encerrar prazo sem defesa" foi removido da tela.
+
+## Fase 3 (a implementar): GRU pela Gerência Jurídica
+Hoje o processo assinado aparece na fila "A gerar a GRU". Faltam os dados da guia (código de recolhimento, unidade gestora, vencimento, número de referência etc.), definição do desconto de 30% à vista e do fluxo Correios → recurso (instância superior do Inmetro; prazo indefinido) → dívida ativa.

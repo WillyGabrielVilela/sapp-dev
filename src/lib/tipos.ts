@@ -22,7 +22,8 @@ export type Situacao =
   | "julgamento_devolvido"
   | "julgado"
   | "assinado_presidente"
-  | "homologado";
+  | "homologado"
+  | "arquivado";
 
 export type TipoEvento =
   | "IMPORTADO"

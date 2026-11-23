@@ -183,7 +183,7 @@ describe.skipIf(!habilitado)("fluxo CCA → CPMA → Jurídico (PostgreSQL real)
     delete process.env["MODO_TESTE"];
   });
 
-  it("fase 2A: advogado julga (todas as espécies por padrão) → Presidente → homologação", async () => {
+  it("fase 2A: advogado julga (todas as espécies por padrão) → homologador → Presidente → Ger. Jurídica", async () => {
     const [, p2] = ids as [string, string];
     const [st] = await sql<{ situacao: string }>(u["adv"], "select situacao from processos where id = $1", [p2]);
     expect(st!.situacao).toBe("com_defesa");
@@ -204,24 +204,63 @@ describe.skipIf(!habilitado)("fluxo CCA → CPMA → Jurídico (PostgreSQL real)
     await falha(u["adv"], "select julgar_processo($1,'multa',100,'curta')", [p2], /fundamentação/);
     await sql(u["adv"], "select julgar_processo($1,'multa',1234.5,'Infração comprovada pelo auto.')", [p2]);
     await falha(u["adv"], "select julgar_processo($1,'multa',1,'Fundamentação suficiente')", [p2], /não está apto/); // já julgado
-    await falha(u["hom"], "select homologar_processo($1)", [p2], /depois da assinatura/);
-    await falha(u["adv"], "select assinar_presidente($1)", [p2], /Permissão negada/);
-    await falha(u["hom"], "select devolver_julgamento($1,'motivo qualquer')", [p2], /Permissão negada/); // homologador ainda não atua
-    await sql(u["pres"], "select devolver_julgamento($1,'Rever o valor da multa')", [p2]);
+    await falha(u["pres"], "select assinar_presidente($1)", [p2], /depois da homologação/); // Presidente só depois do homologador
+    await falha(u["adv"], "select homologar_processo($1)", [p2], /Permissão negada/);
+    await falha(u["pres"], "select devolver_julgamento($1,'motivo qualquer')", [p2], /Permissão negada/); // ainda é a vez do homologador
+    await sql(u["hom"], "select devolver_julgamento($1,'Rever o valor da multa')", [p2]);
     await sql(u["adv"], "select julgar_processo($1,'multa',900,'Valor revisto conforme porte da empresa.')", [p2]);
-    await sql(u["pres"], "select assinar_presidente($1,'ok')", [p2]);
     await pool().query("insert into user_roles (user_id, role) values ($1, 'homologador') on conflict do nothing", [u["adv"]]);
     await falha(u["adv"], "select homologar_processo($1)", [p2], /Quem julgou/); // advogado-homologador não homologa o que julgou
-    await sql(u["hom"], "select homologar_processo($1)", [p2]);
+    await sql(u["hom"], "select homologar_processo($1,'de acordo')", [p2]);
+    await falha(u["hom"], "select assinar_presidente($1)", [p2], /Permissão negada/);
+    await sql(u["pres"], "select assinar_presidente($1)", [p2]);
     const [j] = await sql<{ valor_multa: string; assinado_por: string; homologado_por: string }>(u["adv"], "select valor_multa::text, assinado_por, homologado_por from julgamentos where processo_id = $1", [p2]);
     expect(j!.valor_multa).toBe("900.00");
-    expect(j!.assinado_por).toBe(u["pres"]);
     expect(j!.homologado_por).toBe(u["hom"]);
-    const ev = await sql<{ tipo: string; observacao: string | null }>(u["adv"], "select tipo, observacao from eventos where processo_id = $1 and tipo in ('JULGADO','DEVOLVIDO','ASSINADO_PRESIDENTE','HOMOLOGADO') order by id", [p2]);
-    expect(ev.map((x) => x.tipo)).toEqual(["JULGADO", "DEVOLVIDO", "JULGADO", "ASSINADO_PRESIDENTE", "HOMOLOGADO"]);
+    expect(j!.assinado_por).toBe(u["pres"]);
+    const ev = await sql<{ tipo: string; observacao: string | null }>(u["adv"], "select tipo, observacao from eventos where processo_id = $1 and tipo in ('JULGADO','DEVOLVIDO','HOMOLOGADO','ASSINADO_PRESIDENTE') order by id", [p2]);
+    expect(ev.map((x) => x.tipo)).toEqual(["JULGADO", "DEVOLVIDO", "JULGADO", "HOMOLOGADO", "ASSINADO_PRESIDENTE"]);
     expect(ev[0]!.observacao).toMatch(/R\$ 1234,50/); // a 1ª decisão fica na trilha mesmo após a revisão
+    expect(ev[4]!.observacao).toMatch(/GRU/);
     const [fim] = await sql<{ situacao: string }>(u["adv"], "select situacao from processos where id = $1", [p2]);
-    expect(fim!.situacao).toBe("homologado");
+    expect(fim!.situacao).toBe("assinado_presidente"); // volta à Ger. Jurídica (fase 3)
+  });
+
+  it("arquivamento assinado pelo Presidente encerra o processo (sem GRU)", async () => {
+    const [p1] = ids as [string];
+    const [st] = await sql<{ situacao: string }>(u["adv"], "select situacao from processos where id = $1", [p1]);
+    expect(st!.situacao).toBe("sem_defesa");
+    await sql(u["adv"], "select julgar_processo($1,'arquivamento',null,'Não houve infração comprovada.')", [p1]);
+    await sql(u["hom"], "select homologar_processo($1)", [p1]);
+    await sql(u["pres"], "select assinar_presidente($1)", [p1]);
+    const [fim] = await sql<{ situacao: string }>(u["adv"], "select situacao from processos where id = $1", [p1]);
+    expect(fim!.situacao).toBe("arquivado");
+  });
+
+  it("prazo vencido sem defesa segue sozinho; defesa tardia ainda é registrada", async () => {
+    const [, , p3] = ids as [string, string, string];
+    await pool().query("update processos set situacao = 'aguardando_defesa', defesa_em = null, ciencia_em = hoje() - 30, vencimento_defesa = hoje() - 15 where id = $1", [p3]);
+    await pool().query("delete from julgamentos where processo_id = $1", [p3]);
+    const [r] = await sql<{ n: number }>(u["adv"], "select encerrar_prazos_vencidos() as n");
+    expect(r!.n).toBe(1);
+    const [r2] = await sql<{ n: number }>(u["adv"], "select encerrar_prazos_vencidos() as n");
+    expect(r2!.n).toBe(0); // idempotente
+    const [st] = await sql<{ situacao: string }>(u["adv"], "select situacao from processos where id = $1", [p3]);
+    expect(st!.situacao).toBe("sem_defesa");
+    const [ev] = await sql<{ usuario_id: string; observacao: string }>(u["adv"], "select usuario_id, observacao from eventos where processo_id = $1 and tipo = 'PRAZO_ENCERRADO' order by id desc limit 1", [p3]);
+    expect(ev!.usuario_id).toBe("00000000-0000-0000-0000-000000000000");
+    expect(ev!.observacao).toMatch(/automático/);
+    // um processo ainda dentro do prazo não é tocado
+    await pool().query("update processos set situacao = 'aguardando_defesa', vencimento_defesa = hoje() + 3 where id = $1", [p3]);
+    expect((await sql<{ n: number }>(u["adv"], "select encerrar_prazos_vencidos() as n"))[0]!.n).toBe(0);
+    // defesa que chega depois do encerramento automático
+    await pool().query("update processos set vencimento_defesa = hoje() - 15 where id = $1", [p3]);
+    await sql(u["adv"], "select encerrar_prazos_vencidos()");
+    await sql(u["jur"], "select registrar_defesa($1, hoje() - 1, 'chegou pelos Correios')", [p3]);
+    const [fim] = await sql<{ situacao: string }>(u["jur"], "select situacao from processos where id = $1", [p3]);
+    expect(fim!.situacao).toBe("com_defesa");
+    const [e2] = await sql<{ observacao: string }>(u["jur"], "select observacao from eventos where processo_id = $1 and tipo = 'DEFESA_REGISTRADA' order by id desc limit 1", [p3]);
+    expect(e2!.observacao).toMatch(/FORA DO PRAZO/);
   });
 
   it("histórico é imutável e inclui toda a trilha", async () => {

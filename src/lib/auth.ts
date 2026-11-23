@@ -21,6 +21,6 @@ export function useSessao() {
 export function usePerfis() {
   return useQuery({
     queryKey: ["perfis"],
-    queryFn: async () => new Map((await listarPerfisFn()).map((p) => [p.id, p.nome || "—"])),
+    queryFn: async () => new Map([["00000000-0000-0000-0000-000000000000", "Sistema (automático)"], ...(await listarPerfisFn()).map((p): [string, string] => [p.id, p.nome || "—"])]),
   });
 }

@@ -7,13 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { anteciparPrazoFn, atualizarDadosFn, encerrarPrazoFn, modoTesteFn, protocolarFn, registrarDefesaFn } from "@/lib/juridico.functions";
+import { anteciparPrazoFn, atualizarDadosFn, modoTesteFn, protocolarFn, registrarDefesaFn } from "@/lib/juridico.functions";
 import { documentoValido, normalizarDocumento } from "@/lib/documento";
 import { dataBR, erroMsg } from "@/lib/rotulos";
 import type { Notificacao, Processo } from "@/lib/tipos";
 import { hojeISO, ResultadoDialog } from "./ResultadoDialog";
 
-type Dialogo = null | "protocolar" | "dados" | "defesa" | "encerrar" | "resultado";
+type Dialogo = null | "protocolar" | "dados" | "defesa" | "resultado";
 
 /** Providências do Jurídico (fase 1) para o processo aberto: protocolo → notificação → ciência → defesa. */
 export function AcoesJuridico({ p, notificacoes }: { p: Processo; notificacoes: Notificacao[] }) {
@@ -26,18 +26,12 @@ export function AcoesJuridico({ p, notificacoes }: { p: Processo; notificacoes: 
     fechar();
     await qc.invalidateQueries();
   };
-  const encerrar = useMutation({
-    mutationFn: (obs: string) => encerrarPrazoFn({ data: { processoId: p.id, obs } }),
-    onSuccess: () => depoisDe("Prazo encerrado sem defesa"),
-    onError: (e) => toast.error(erroMsg(e)),
-  });
   const { data: modoTeste } = useQuery({ queryKey: ["modo-teste"], queryFn: () => modoTesteFn() });
   const anteciparPrazo = useMutation({
     mutationFn: () => anteciparPrazoFn({ data: { processoId: p.id } }),
     onSuccess: () => depoisDe("Teste: datas recuadas em 15 dias"),
     onError: (e) => toast.error(erroMsg(e)),
   });
-  const vencido = !!p.vencimento_defesa && hojeISO() > p.vencimento_defesa;
   const podeEditarDados = ["protocolado_juridico", "notificacao_frustrada", "notificacao_enviada", "aguardando_defesa"].includes(p.situacao);
 
   return (
@@ -47,13 +41,10 @@ export function AcoesJuridico({ p, notificacoes }: { p: Processo; notificacoes: 
         <Button asChild><Link to="/juridico">Incluir em lista de saída</Link></Button>
       )}
       {p.situacao === "notificacao_enviada" && pendente && <Button onClick={() => setDialogo("resultado")}>Registrar entrega</Button>}
-      {p.situacao === "aguardando_defesa" && (
-        <>
-          <Button onClick={() => setDialogo("defesa")}>Registrar defesa</Button>
-          <Button variant="outline" disabled={!vencido || encerrar.isPending} title={vencido ? "" : `O prazo vai até ${dataBR(p.vencimento_defesa)}`} onClick={() => setDialogo("encerrar")}>
-            Encerrar prazo sem defesa
-          </Button>
-        </>
+      {(p.situacao === "aguardando_defesa" || p.situacao === "sem_defesa") && (
+        <Button variant={p.situacao === "sem_defesa" ? "outline" : "default"} onClick={() => setDialogo("defesa")}>
+          {p.situacao === "sem_defesa" ? "Registrar defesa recebida" : "Registrar defesa"}
+        </Button>
       )}
       {modoTeste && p.situacao === "aguardando_defesa" && (
         <Button variant="outline" className="border-dashed border-warning-foreground text-warning-foreground" disabled={anteciparPrazo.isPending} onClick={() => anteciparPrazo.mutate()}>
@@ -68,9 +59,6 @@ export function AcoesJuridico({ p, notificacoes }: { p: Processo; notificacoes: 
         <ResultadoDialog notificacaoId={pendente.id} canal={pendente.canal} titulo={p.numero} dataSaida={pendente.data_saida} fechar={fechar} />
       )}
       {dialogo === "defesa" && <DefesaDialog p={p} fechar={fechar} depois={depoisDe} />}
-      {dialogo === "encerrar" && (
-        <TextoDialog titulo="Encerrar prazo sem defesa" texto={`O prazo venceu em ${dataBR(p.vencimento_defesa)}. Confirma que não houve defesa?`} fechar={fechar} enviar={(t) => encerrar.mutate(t)} ocupado={encerrar.isPending} />
-      )}
     </>
   );
 }
@@ -147,24 +135,6 @@ function DefesaDialog({ p, fechar, depois }: { p: Processo; fechar: () => void; 
         <DialogFooter>
           <Button variant="outline" disabled={salvar.isPending} onClick={fechar}>Cancelar</Button>
           <Button disabled={salvar.isPending || !data} onClick={() => salvar.mutate()}>Registrar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function TextoDialog({ titulo, texto, fechar, enviar, ocupado }: { titulo: string; texto: string; fechar: () => void; enviar: (t: string) => void; ocupado: boolean }) {
-  const [t, setT] = useState("");
-  return (
-    <Dialog open onOpenChange={(o) => !o && !ocupado && fechar()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>{titulo}</DialogTitle></DialogHeader>
-        <p className="text-sm">{texto}</p>
-        <Label htmlFor="obs-t">Observação (opcional)</Label>
-        <Textarea id="obs-t" rows={2} value={t} onChange={(e) => setT(e.target.value)} />
-        <DialogFooter>
-          <Button variant="outline" disabled={ocupado} onClick={fechar}>Cancelar</Button>
-          <Button disabled={ocupado} onClick={() => enviar(t)}>Confirmar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

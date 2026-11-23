@@ -9,7 +9,10 @@ export const listarProcessosFn = createServerFn({ method: "GET" })
     const { comUsuario } = await import("@/server/db.server");
     const { exigirPapel, PAPEIS_SETORES } = await import("@/server/guarda.server");
     exigirPapel(context.sessao, ...PAPEIS_SETORES); // admin gerencia o sistema, mas não vê dados dos processos
-    return comUsuario(context.sessao.id, async (c) => (await c.query<Processo>("select * from processos order by updated_at desc")).rows);
+    return comUsuario(context.sessao.id, async (c) => {
+      await c.query("select encerrar_prazos_vencidos()"); // prazo vencido sem defesa segue sozinho
+      return (await c.query<Processo>("select * from processos order by updated_at desc")).rows;
+    });
   });
 
 export const obterProcessoFn = createServerFn({ method: "GET" })
@@ -20,6 +23,7 @@ export const obterProcessoFn = createServerFn({ method: "GET" })
     const { exigirPapel, PAPEIS_SETORES } = await import("@/server/guarda.server");
     exigirPapel(context.sessao, ...PAPEIS_SETORES);
     return comUsuario(context.sessao.id, async (c) => {
+      await c.query("select encerrar_prazos_vencidos()");
       const p = (await c.query<Processo>("select * from processos where id = $1", [data.id])).rows[0];
       if (!p) return null;
       // registro de consulta (LGPD): uma linha por abertura da página de detalhe

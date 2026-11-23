@@ -26,16 +26,16 @@ function Julgamento() {
   const por = (...s: Processo["situacao"][]) => processos.filter((p) => s.includes(p.situacao));
   return (
     <>
-      <Cabecalho titulo="Julgamento, assinatura e homologação" sub="Julgamento (advogado da espécie) → assinatura do Presidente → homologação" />
+      <Cabecalho titulo="Julgamento, assinatura e homologação" sub="Julgamento (advogado) → homologação → assinatura do Presidente → Ger. Jurídica (GRU)" />
       {error ? <p role="alert" className="text-destructive">Não foi possível carregar os processos.</p> : isLoading ? <p className="text-muted-foreground">Carregando processos…</p> : (
         <div className="space-y-8">
           {sessao.tem("advogado") && (
             <Tabela titulo={`A julgar · ${minhas.length ? `espécies ${minhas.join(", ")}` : "todas as espécies"}`} itens={por("com_defesa", "sem_defesa", "julgamento_devolvido").filter((p) => p.especie && (!minhas.length || minhas.includes(p.especie)))} botao="Julgar" />
           )}
-          {sessao.tem("presidente") && <Tabela titulo="Aguardando assinatura do Presidente" itens={por("julgado")} botao="Assinar" />}
-          {sessao.tem("homologador") && <Tabela titulo="Aguardando homologação" itens={por("assinado_presidente")} botao="Homologar" />}
+          {sessao.tem("homologador") && <Tabela titulo="Aguardando homologação" itens={por("julgado")} botao="Homologar" />}
+          {sessao.tem("presidente") && <Tabela titulo="Aguardando assinatura do Presidente" itens={por("homologado")} botao="Assinar" />}
           {sessao.tem("homologador") && <DistribuicaoEspecies />}
-          <Tabela titulo="Homologados (aguardam a etapa da GRU)" itens={por("homologado")} botao="Abrir" />
+          <Tabela titulo="Assinados · com a Ger. Jurídica para gerar a GRU" itens={por("assinado_presidente")} botao="Abrir" />
         </div>
       )}
     </>
