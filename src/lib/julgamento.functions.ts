@@ -5,6 +5,7 @@ import type { JulgadorEspecies } from "@/lib/tipos";
 
 const ID = z.string().uuid();
 
+/** Espécies que o advogado julga. Lista vazia = todas (padrão). */
 export const minhasEspeciesFn = createServerFn({ method: "GET" })
   .middleware([exigirSessao])
   .handler(async ({ context }): Promise<string[]> => {
@@ -59,20 +60,20 @@ export const devolverJulgamentoFn = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-// ---------- distribuição por espécie (administrador) ----------
+// ---------- distribuição por espécie (homologadores) ----------
 export const listarJulgadoresFn = createServerFn({ method: "GET" })
   .middleware([exigirSessao])
   .handler(async ({ context }): Promise<JulgadorEspecies[]> => {
     const { comUsuario } = await import("@/server/db.server");
     const { exigirPapel } = await import("@/server/guarda.server");
-    exigirPapel(context.sessao, "admin");
+    exigirPapel(context.sessao, "homologador");
     return comUsuario(context.sessao.id, async (c) =>
       (
         await c.query<JulgadorEspecies>(
           `select u.id, coalesce(nullif(u.nome, ''), u.email) as nome, u.email,
                   coalesce(array_agg(je.especie order by je.especie) filter (where je.especie is not null), '{}') as especies
              from usuarios u
-             join user_roles ur on ur.user_id = u.id and ur.role = 'juridico'
+             join user_roles ur on ur.user_id = u.id and ur.role = 'advogado'
              left join julgadores_especies je on je.usuario_id = u.id
             group by u.id order by 2`,
         )

@@ -1,7 +1,7 @@
 // Tipos de domínio do SAPP (substituem os tipos gerados pelo Supabase).
 // Devem acompanhar db/migrations/*.sql. Datas "date" chegam como "YYYY-MM-DD"; timestamps, como ISO 8601.
 
-export type Papel = "cca" | "cpma" | "juridico" | "gestao" | "admin" | "presidente" | "homologador";
+export type Papel = "cca" | "cpma" | "juridico" | "gestao" | "admin" | "presidente" | "homologador" | "advogado";
 export type SetorCodigo = "CCA" | "CPMA" | "JURIDICO";
 export type SetorTecnico = "METROLOGIA" | "QUALIDADE" | "PRE_EMBALADOS";
 
@@ -183,4 +183,4 @@ export type Julgamento = {
   homologado_por: string | null;
   homologado_em: string | null;
 };
-export type JulgadorEspecies = { id: string; nome: string; email: string; especies: string[] };
+export type JulgadorEspecies = { id: string; nome: string; email: string; especies: string[] }; // especies vazio = julga todas (padrão)

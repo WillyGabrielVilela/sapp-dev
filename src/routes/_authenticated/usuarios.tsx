@@ -4,8 +4,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { criarUsuarioFn, definirPapeisFn, listarEspeciesFn, listarUsuariosFn, redefinirSenhaFn } from "@/lib/cadastros.functions";
-import { definirEspeciesJulgadorFn, listarJulgadoresFn } from "@/lib/julgamento.functions";
+import { criarUsuarioFn, definirPapeisFn, listarUsuariosFn, redefinirSenhaFn } from "@/lib/cadastros.functions";
 import { useSessao } from "@/lib/auth";
 import { Cabecalho, SemPermissao } from "@/components/AppShell";
 import { erroMsg, PAPEIS, type Papel } from "@/lib/rotulos";
@@ -62,7 +61,7 @@ function Usuarios() {
         <Input className="w-56" type="password" minLength={8} placeholder="Senha inicial (mín. 8)" value={novo.senha} onChange={(e) => setNovo({ ...novo, senha: e.target.value })} required />
         <Button type="submit" disabled={criar.isPending}>Criar usuário</Button>
       </form>
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <div className="tabela-rolavel rounded-lg border bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted text-left text-xs text-muted-foreground">
             <tr><th className="px-3 py-2">Nome</th><th className="px-3 py-2">E-mail</th>{PAPEIS.map((p) => <th key={p.valor} className="px-3 py-2 text-center">{p.rotulo}</th>)}<th className="px-3 py-2" /></tr>
@@ -91,41 +90,6 @@ function Usuarios() {
           </tbody>
         </table>
       </div>
-      <JulgadoresPorEspecie />
     </>
-  );
-}
-
-/** "Divide por espécie": o administrador define quais espécies cada advogado do Jurídico julga. */
-function JulgadoresPorEspecie() {
-  const qc = useQueryClient();
-  const { data: julgadores = [] } = useQuery({ queryKey: ["julgadores"], queryFn: () => listarJulgadoresFn() });
-  const { data: especies = [] } = useQuery({ queryKey: ["especies"], queryFn: () => listarEspeciesFn() });
-  const definir = useMutation({
-    mutationFn: ({ id, especies }: { id: string; especies: string[] }) => definirEspeciesJulgadorFn({ data: { id, especies } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["julgadores"] }),
-    onError: (e) => toast.error(erroMsg(e)),
-  });
-  return (
-    <section className="mt-8">
-      <h2 className="mb-1 font-semibold">Quem julga cada espécie</h2>
-      <p className="mb-3 text-sm text-muted-foreground">Só usuários com o perfil Jurídico aparecem aqui. Um advogado só julga processos das espécies marcadas.</p>
-      {!julgadores.length ? <p className="text-sm text-muted-foreground">Nenhum usuário com perfil Jurídico.</p> : !especies.length ? <p className="text-sm text-muted-foreground">Cadastre as espécies primeiro.</p> : (
-        <div className="space-y-2">
-          {julgadores.map((j) => (
-            <div key={j.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border bg-card px-4 py-2 text-sm">
-              <span className="w-56 font-medium">{j.nome}</span>
-              {especies.map((e) => (
-                <label key={e.codigo} className="flex items-center gap-1">
-                  <input type="checkbox" checked={j.especies.includes(e.codigo)} disabled={definir.isPending}
-                    onChange={(ev) => definir.mutate({ id: j.id, especies: ev.target.checked ? [...j.especies, e.codigo] : j.especies.filter((x) => x !== e.codigo) })} />
-                  {e.codigo}
-                </label>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
   );
 }

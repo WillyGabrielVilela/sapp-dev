@@ -61,7 +61,7 @@ function Juridico() {
         <section>
           <h2 className="mb-3 font-semibold">Listas de saída recentes ({listas.length})</h2>
           {!listas.length ? <p className="border-t py-4 text-sm text-muted-foreground">Nenhuma lista criada.</p> :
-            <div className="overflow-x-auto rounded-md border"><table className="w-full text-left text-sm">
+            <div className="tabela-rolavel rounded-md border"><table className="w-full text-left text-sm">
               <thead className="bg-muted text-muted-foreground"><tr><th className="p-3">Lista</th><th className="p-3">Canal</th><th className="p-3">Itens</th><th className="p-3">Sem desfecho</th></tr></thead>
               <tbody>{listas.slice(0, 20).map((l) => <tr key={l.id} className="border-t">
                 <td className="p-3"><Link to="/listas-saida/$id" params={{ id: l.id }} className="text-primary hover:underline">{dataBR(l.data)} · nº {l.numero_dia}{l.titulo ? ` · ${l.titulo}` : ""}</Link></td>
@@ -108,7 +108,7 @@ function FilaTabela({ fila, visiveis, papeis }: { fila: Fila; visiveis: Processo
       </div>
     )}
     {!visiveis.length ? <p className="border-t py-4 text-sm text-muted-foreground">Nenhum processo nesta fila.</p> :
-      <div className="overflow-x-auto rounded-md border"><table className="w-full text-left text-sm">
+      <div className="tabela-rolavel rounded-md border"><table className="w-full text-left text-sm">
         <thead className="bg-muted text-muted-foreground"><tr>
           {fila.seleciona && <th className="w-10 p-3"><input type="checkbox" aria-label="Selecionar todos" checked={marcados.length === visiveis.length} onChange={(e) => setSel(e.target.checked ? new Set(visiveis.map((p) => p.id)) : new Set())} /></th>}
           <th className="p-3">Processo</th><th className="p-3">AI</th><th className="p-3">Autuado</th><th className="p-3">Bairro</th><th className="p-3">Situação</th><th className="p-3">Providência</th></tr></thead>

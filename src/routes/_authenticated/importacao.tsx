@@ -266,7 +266,7 @@ function Triagem({ arquivo, usuarioId }: { arquivo: Arquivo; usuarioId: string }
         </div>
       )}
       {!!itens.length && (
-        <div className="overflow-x-auto rounded-lg border bg-card">
+        <div className="tabela-rolavel rounded-lg border bg-card">
           <table className="w-full text-sm">
             <thead className="bg-muted text-left text-xs text-muted-foreground">
               <tr>

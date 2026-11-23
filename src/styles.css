@@ -124,3 +124,21 @@
     letter-spacing: -0.01em;
   }
 }
+
+/* Tabelas longas rolam dentro do próprio quadro (cabeçalho fixo), em vez de alongar a página inteira. */
+.tabela-rolavel {
+  overflow: auto;
+  max-height: min(30rem, 62dvh);
+}
+.tabela-rolavel thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--color-muted);
+}
+@media print {
+  .tabela-rolavel {
+    max-height: none;
+    overflow: visible;
+  }
+}

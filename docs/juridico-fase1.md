@@ -40,12 +40,14 @@ Depois do protocolo o Jurídico não devolve mais ao CPMA. Julgamento, "divide p
 Regras confirmadas pelo IPEM-PE: advogados julgam **por espécie**; o advogado decide e atribui o **valor da multa**; o **Presidente assina**; a **homologação só vem depois da assinatura** (usuários com essa atribuição). Essa ordem difere do rascunho, em que "Homologa" vinha antes do Presidente.
 
 ## Fluxo
-`com_defesa` / `sem_defesa` → **Julgar** (advogado designado para a espécie: multa + valor, ou arquivamento; fundamentação obrigatória) → `julgado` → **Presidente assina** → `assinado_presidente` → **Homologador homologa** → `homologado`.
+`com_defesa` / `sem_defesa` → **Julgar** (usuário com perfil **Advogado**; julga todas as espécies por padrão, salvo restrição definida pelos homologadores: multa + valor, ou arquivamento; fundamentação obrigatória) → `julgado` → **Presidente assina** → `assinado_presidente` → **Homologador homologa** → `homologado`.
 Presidente (antes de assinar) e homologador (antes de homologar) podem **devolver ao julgamento** com justificativa → `julgamento_devolvido` → o advogado rejulga. Cada decisão, inclusive as revisadas, fica no histórico imutável.
 
 ## Perfis novos
-`presidente` e `homologador` (atribuídos em *Usuários e perfis*). A distribuição por espécie é feita pelo administrador na mesma tela ("Quem julga cada espécie").
+`advogado` (quem julga), `presidente` e `homologador`, atribuídos em *Usuários e perfis*. O perfil `juridico` continua sendo o do setor (receber, protocolar, notificar) e **não** julga.
+**Designação por espécie:** por padrão cada advogado julga **todas** as espécies. Os **homologadores** (que também são advogados) restringem cada advogado a certas espécies na página *Julgamento e assinatura* ("Quem julga cada espécie"); nenhuma marcada = todas.
 Controle: **quem julgou o processo não pode homologá-lo**.
+Quem já tinha só `juridico` e julgava na versão anterior precisa receber o perfil `advogado`.
 
 ## Premissas a confirmar
 - Com defesa e sem defesa seguem o mesmo caminho de julgamento (o rascunho não tem seta saindo de "Com defesa").

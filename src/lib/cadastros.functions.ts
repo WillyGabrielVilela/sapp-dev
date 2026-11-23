@@ -3,7 +3,7 @@ import { z } from "zod";
 import { exigirSessao } from "@/lib/auth-middleware";
 import type { Especie, Fiscal, UsuarioAdmin } from "@/lib/tipos";
 
-const PAPEL = z.enum(["cca", "cpma", "juridico", "gestao", "admin", "presidente", "homologador"]);
+const PAPEL = z.enum(["cca", "cpma", "juridico", "gestao", "admin", "presidente", "homologador", "advogado"]);
 const SETOR_TECNICO = z.enum(["METROLOGIA", "QUALIDADE", "PRE_EMBALADOS"]);
 
 // ---------- espécies ----------
@@ -103,7 +103,7 @@ export const listarUsuariosFn = createServerFn({ method: "GET" })
 
 export const definirPapeisFn = createServerFn({ method: "POST" })
   .middleware([exigirSessao])
-  .inputValidator(z.object({ id: z.string().uuid(), papeis: z.array(PAPEL).max(7) }))
+  .inputValidator(z.object({ id: z.string().uuid(), papeis: z.array(PAPEL).max(8) }))
   .handler(async ({ context, data }) => {
     const { comUsuario } = await import("@/server/db.server");
     await comUsuario(context.sessao.id, (c) => c.query("select definir_papeis($1, $2::app_role[])", [data.id, data.papeis]));

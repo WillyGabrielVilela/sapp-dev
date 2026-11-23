@@ -7,10 +7,10 @@ import { useSessao } from "@/lib/auth";
 import { PAPEIS, type Papel } from "@/lib/rotulos";
 
 const NAV: { to: string; rotulo: string; icon: typeof LayoutList; papeis: Papel[] }[] = [
-  { to: "/painel", rotulo: "Painel e busca", icon: LayoutList, papeis: ["cca", "cpma", "juridico", "gestao", "presidente", "homologador"] },
+  { to: "/painel", rotulo: "Painel e busca", icon: LayoutList, papeis: ["cca", "cpma", "juridico", "gestao", "presidente", "homologador", "advogado"] },
   { to: "/cpma", rotulo: "CPMA · Recebimento", icon: Inbox, papeis: ["cpma"] },
   { to: "/juridico", rotulo: "Jurídico · Recebimento", icon: Scale, papeis: ["juridico"] },
-  { to: "/julgamento", rotulo: "Julgamento e assinatura", icon: Scale, papeis: ["juridico", "presidente", "homologador"] },
+  { to: "/julgamento", rotulo: "Julgamento e assinatura", icon: Scale, papeis: ["advogado", "presidente", "homologador"] },
   { to: "/importacao", rotulo: "Importação JR5260", icon: FileUp, papeis: ["cca"] },
   { to: "/fiscais", rotulo: "Fiscais", icon: Users, papeis: ["cpma", "admin"] },
   { to: "/especies", rotulo: "Espécies", icon: Tags, papeis: ["admin", "cpma", "cca"] },
@@ -24,13 +24,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   const papeis = sessao?.papeis ?? [];
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
+    <div className="flex h-dvh overflow-hidden print:block print:h-auto print:overflow-visible">
+      <aside className="flex w-60 shrink-0 flex-col overflow-y-auto bg-sidebar text-sidebar-foreground print:hidden">
         <div className="border-b border-sidebar-border px-5 py-5">
           <div className="text-xl font-bold tracking-tight">SAPP</div>
           <div className="text-xs opacity-70">IPEM-PE · protótipo</div>
         </div>
-        <nav className="flex-1 space-y-1 p-3">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {NAV.filter((n) => n.papeis.some((p) => papeis.includes(p))).map(({ to, rotulo, icon: Icon }) => (
             <Link
               key={to}
@@ -59,8 +59,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
         </div>
       </aside>
-      <main className="min-w-0 flex-1">
-        <div className="border-b bg-warning px-6 py-1.5 text-xs text-warning-foreground">
+      <main className="min-w-0 flex-1 overflow-y-auto print:overflow-visible">
+        <div className="sticky top-0 z-10 border-b bg-warning px-6 py-1.5 text-xs text-warning-foreground print:hidden">
           Ambiente de testes — use somente dados fictícios. Nenhum processo real deve ser cadastrado.
         </div>
         <div className="p-6 lg:p-8">

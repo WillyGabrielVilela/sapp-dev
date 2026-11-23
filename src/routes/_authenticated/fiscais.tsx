@@ -89,7 +89,7 @@ function Fiscais() {
         </div>
         <Button type="submit" disabled={!novo.especies.length || exec.isPending}>Cadastrar fiscal</Button>
       </form>
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <div className="tabela-rolavel rounded-lg border bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted text-left text-xs text-muted-foreground">
             <tr><th className="px-3 py-2">Nome</th><th className="px-3 py-2">Identificação</th><th className="px-3 py-2">Setor técnico</th><th className="px-3 py-2">Espécies</th><th className="px-3 py-2">Situação</th><th /></tr>

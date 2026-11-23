@@ -7,6 +7,7 @@ export const PAPEIS: { valor: Papel; rotulo: string }[] = [
   { valor: "cpma", rotulo: "CPMA" },
   { valor: "juridico", rotulo: "Jurídico" },
   { valor: "gestao", rotulo: "Gestão" },
+  { valor: "advogado", rotulo: "Advogado" },
   { valor: "presidente", rotulo: "Presidente" },
   { valor: "homologador", rotulo: "Homologador" },
   { valor: "admin", rotulo: "Administrador" },

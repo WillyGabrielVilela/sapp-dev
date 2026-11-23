@@ -20,7 +20,7 @@ export function AcoesJulgamento({ p, julgamento, papeis }: { p: Processo; julgam
   const qc = useQueryClient();
   const [dialogo, setDialogo] = useState<Dialogo>(null);
   const tem = (r: Papel) => papeis.includes(r);
-  const { data: minhas = [] } = useQuery({ queryKey: ["minhas-especies"], enabled: tem("juridico"), queryFn: () => minhasEspeciesFn() });
+  const { data: minhas = [] } = useQuery({ queryKey: ["minhas-especies"], enabled: tem("advogado"), queryFn: () => minhasEspeciesFn() });
   const fechar = () => setDialogo(null);
   const feito = async (m: string) => {
     toast.success(m);
@@ -29,11 +29,11 @@ export function AcoesJulgamento({ p, julgamento, papeis }: { p: Processo; julgam
   };
 
   const aJulgar = ["com_defesa", "sem_defesa", "julgamento_devolvido"].includes(p.situacao);
-  const podeJulgar = tem("juridico") && aJulgar && !!p.especie && minhas.includes(p.especie);
+  const podeJulgar = tem("advogado") && aJulgar && !!p.especie && (minhas.length === 0 || minhas.includes(p.especie));
   const podeAssinar = tem("presidente") && p.situacao === "julgado";
   const podeHomologar = tem("homologador") && p.situacao === "assinado_presidente";
   const podeDevolver = podeAssinar || podeHomologar;
-  const semDesignacao = tem("juridico") && aJulgar && !podeJulgar;
+  const semDesignacao = tem("advogado") && aJulgar && !podeJulgar;
 
   if (!podeJulgar && !podeDevolver && !podeHomologar && !semDesignacao) return null;
   return (

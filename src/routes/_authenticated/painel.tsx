@@ -31,7 +31,7 @@ function Painel() {
     queryFn: () => listarProcessosFn(),
   });
   if (!sessao) return null;
-  if (!sessao.tem("cca", "cpma", "juridico", "gestao", "presidente", "homologador")) return <SemPermissao />;
+  if (!sessao.tem("cca", "cpma", "juridico", "gestao", "presidente", "homologador", "advogado")) return <SemPermissao />;
 
   const termo = busca.trim();
   const resultados = termo ? processos.filter((p) => p.numero.includes(termo) || (p.numero_ai ?? "").includes(termo)) : [];
@@ -48,6 +48,7 @@ function Painel() {
     add("CPMA · Em conferência e digitalização", (p) => p.setor_atual === "CPMA" && !p.setor_destino);
     add("CPMA · Enviados, aguardando o Jurídico receber", (p) => p.setor_atual === "CPMA" && p.setor_destino === "JURIDICO");
   }
+  if (sessao.tem("advogado")) add("Advogado · A julgar", (p) => p.situacao === "com_defesa" || p.situacao === "sem_defesa" || p.situacao === "julgamento_devolvido");
   if (sessao.tem("presidente") && !sessao.tem("juridico")) add("Presidência · A assinar", (p) => p.situacao === "julgado");
   if (sessao.tem("homologador") && !sessao.tem("juridico")) add("Homologação · A homologar", (p) => p.situacao === "assinado_presidente");
   if (sessao.tem("juridico")) {
@@ -122,7 +123,7 @@ function Painel() {
 function Tabela({ itens, vazio }: { itens: Processo[]; vazio: string }) {
   if (!itens.length) return <p className="rounded border border-dashed p-4 text-sm text-muted-foreground">{vazio}</p>;
   return (
-    <div className="overflow-x-auto rounded-lg border bg-card">
+    <div className="tabela-rolavel rounded-lg border bg-card">
       <table className="w-full text-sm">
         <thead className="bg-muted text-left text-xs text-muted-foreground">
           <tr>

@@ -14,7 +14,7 @@ describe.skipIf(!habilitado)("fluxo CCA → CPMA → Jurídico (PostgreSQL real)
   let pool: typeof import("./db.server").pool;
   let hashSenha: typeof import("./auth.server").hashSenha;
   let conferirSenha: typeof import("./auth.server").conferirSenha;
-  const u = {} as Record<"admin" | "cca" | "cpma" | "jur" | "gestao" | "pres" | "hom", string>;
+  const u = {} as Record<"admin" | "cca" | "cpma" | "jur" | "gestao" | "pres" | "hom" | "adv", string>;
   const num = (n: number) => `52627.${String(n).padStart(6, "0")}/2026-01`;
   const ids: string[] = [];
 
@@ -31,7 +31,7 @@ describe.skipIf(!habilitado)("fluxo CCA → CPMA → Jurídico (PostgreSQL real)
       "truncate usuarios, user_roles, sessoes, especies, fiscais, arquivos_originais, itens_importados, processos, eventos, correcoes, acesso_logs, listas_saida, notificacoes, protocolo_seq restart identity cascade",
     );
     const h = await hashSenha("senha-de-teste-1");
-    for (const [chave, papeis] of Object.entries({ admin: [], cca: ["cca"], cpma: ["cpma"], jur: ["juridico"], gestao: ["gestao"], pres: ["presidente"], hom: ["homologador"] })) {
+    for (const [chave, papeis] of Object.entries({ admin: [], cca: ["cca"], cpma: ["cpma"], jur: ["juridico"], gestao: ["gestao"], pres: ["presidente"], hom: ["homologador"], adv: ["advogado"] })) {
       const r = await sql<{ id: string }>(null, "select criar_usuario($1, $2, $3) as id", [chave, `${chave}@ipem.test`, h]);
       u[chave as keyof typeof u] = r[0]!.id;
       for (const p of papeis) await pool().query("insert into user_roles (user_id, role) values ($1, $2)", [u[chave as keyof typeof u], p]);
@@ -183,38 +183,44 @@ describe.skipIf(!habilitado)("fluxo CCA → CPMA → Jurídico (PostgreSQL real)
     delete process.env["MODO_TESTE"];
   });
 
-  it("fase 2A: julgamento por espécie → Presidente → homologação", async () => {
+  it("fase 2A: advogado julga (todas as espécies por padrão) → Presidente → homologação", async () => {
     const [, p2] = ids as [string, string];
-    const [st] = await sql<{ situacao: string }>(u["jur"], "select situacao from processos where id = $1", [p2]);
+    const [st] = await sql<{ situacao: string }>(u["adv"], "select situacao from processos where id = $1", [p2]);
     expect(st!.situacao).toBe("com_defesa");
-    await falha(u["jur"], "select julgar_processo($1,'multa',100,'Fundamentação suficiente')", [p2], /não está designado/);
-    await falha(u["cpma"], "select definir_especies_julgador($1, '{CT}')", [u["jur"]], /Permissão negada/);
-    await falha(u["admin"], "select definir_especies_julgador($1, '{CT}')", [u["cca"]], /perfil Jurídico/);
-    await falha(u["admin"], "select definir_especies_julgador($1, '{XX}')", [u["jur"]], /inexistente/);
-    await sql(u["admin"], "select definir_especies_julgador($1, '{CT}')", [u["jur"]]);
-    await falha(u["jur"], "select julgar_processo($1,'multa',null,'Fundamentação suficiente')", [p2], /valor da multa/);
-    await falha(u["jur"], "select julgar_processo($1,'arquivamento',50,'Fundamentação suficiente')", [p2], /não tem valor/);
-    await falha(u["jur"], "select julgar_processo($1,'multa',100,'curta')", [p2], /fundamentação/);
-    await falha(u["pres"], "select julgar_processo($1,'multa',100,'Fundamentação suficiente')", [p2], /Permissão negada/);
-    await sql(u["jur"], "select julgar_processo($1,'multa',1234.5,'Infração comprovada pelo auto.')", [p2]);
-    await falha(u["jur"], "select julgar_processo($1,'multa',1,'Fundamentação suficiente')", [p2], /não está apto/); // já julgado
+    const J = "select julgar_processo($1,'multa',100,'Fundamentação suficiente')";
+    await falha(u["jur"], J, [p2], /Permissão negada/); // perfil Jurídico (setor) não julga: precisa ser Advogado
+    await falha(u["pres"], J, [p2], /Permissão negada/);
+    // designação por espécie: quem define são os homologadores
+    await falha(u["admin"], "select definir_especies_julgador($1, '{BO}')", [u["adv"]], /Permissão negada/);
+    await falha(u["cpma"], "select definir_especies_julgador($1, '{BO}')", [u["adv"]], /Permissão negada/);
+    await falha(u["hom"], "select definir_especies_julgador($1, '{BO}')", [u["cca"]], /perfil Advogado/);
+    await falha(u["hom"], "select definir_especies_julgador($1, '{XX}')", [u["adv"]], /inexistente/);
+    await sql(u["hom"], "select definir_especies_julgador($1, '{BO}')", [u["adv"]]);
+    await falha(u["adv"], J, [p2], /não está designado/); // restrito a BO; o processo é CT
+    await sql(u["hom"], "select definir_especies_julgador($1, '{}')", [u["adv"]]); // volta ao padrão: todas
+    // validações do julgamento
+    await falha(u["adv"], "select julgar_processo($1,'multa',null,'Fundamentação suficiente')", [p2], /valor da multa/);
+    await falha(u["adv"], "select julgar_processo($1,'arquivamento',50,'Fundamentação suficiente')", [p2], /não tem valor/);
+    await falha(u["adv"], "select julgar_processo($1,'multa',100,'curta')", [p2], /fundamentação/);
+    await sql(u["adv"], "select julgar_processo($1,'multa',1234.5,'Infração comprovada pelo auto.')", [p2]);
+    await falha(u["adv"], "select julgar_processo($1,'multa',1,'Fundamentação suficiente')", [p2], /não está apto/); // já julgado
     await falha(u["hom"], "select homologar_processo($1)", [p2], /depois da assinatura/);
-    await falha(u["jur"], "select assinar_presidente($1)", [p2], /Permissão negada/);
+    await falha(u["adv"], "select assinar_presidente($1)", [p2], /Permissão negada/);
     await falha(u["hom"], "select devolver_julgamento($1,'motivo qualquer')", [p2], /Permissão negada/); // homologador ainda não atua
     await sql(u["pres"], "select devolver_julgamento($1,'Rever o valor da multa')", [p2]);
-    await sql(u["jur"], "select julgar_processo($1,'multa',900,'Valor revisto conforme porte da empresa.')", [p2]);
+    await sql(u["adv"], "select julgar_processo($1,'multa',900,'Valor revisto conforme porte da empresa.')", [p2]);
     await sql(u["pres"], "select assinar_presidente($1,'ok')", [p2]);
-    await pool().query("insert into user_roles (user_id, role) values ($1, 'homologador') on conflict do nothing", [u["jur"]]);
-    await falha(u["jur"], "select homologar_processo($1)", [p2], /Quem julgou/);
+    await pool().query("insert into user_roles (user_id, role) values ($1, 'homologador') on conflict do nothing", [u["adv"]]);
+    await falha(u["adv"], "select homologar_processo($1)", [p2], /Quem julgou/); // advogado-homologador não homologa o que julgou
     await sql(u["hom"], "select homologar_processo($1)", [p2]);
-    const [j] = await sql<{ valor_multa: string; assinado_por: string; homologado_por: string }>(u["jur"], "select valor_multa::text, assinado_por, homologado_por from julgamentos where processo_id = $1", [p2]);
+    const [j] = await sql<{ valor_multa: string; assinado_por: string; homologado_por: string }>(u["adv"], "select valor_multa::text, assinado_por, homologado_por from julgamentos where processo_id = $1", [p2]);
     expect(j!.valor_multa).toBe("900.00");
     expect(j!.assinado_por).toBe(u["pres"]);
     expect(j!.homologado_por).toBe(u["hom"]);
-    const ev = (await sql<{ tipo: string; observacao: string | null }>(u["jur"], "select tipo, observacao from eventos where processo_id = $1 and tipo in ('JULGADO','DEVOLVIDO','ASSINADO_PRESIDENTE','HOMOLOGADO') order by id", [p2]));
+    const ev = await sql<{ tipo: string; observacao: string | null }>(u["adv"], "select tipo, observacao from eventos where processo_id = $1 and tipo in ('JULGADO','DEVOLVIDO','ASSINADO_PRESIDENTE','HOMOLOGADO') order by id", [p2]);
     expect(ev.map((x) => x.tipo)).toEqual(["JULGADO", "DEVOLVIDO", "JULGADO", "ASSINADO_PRESIDENTE", "HOMOLOGADO"]);
     expect(ev[0]!.observacao).toMatch(/R\$ 1234,50/); // a 1ª decisão fica na trilha mesmo após a revisão
-    const [fim] = await sql<{ situacao: string }>(u["jur"], "select situacao from processos where id = $1", [p2]);
+    const [fim] = await sql<{ situacao: string }>(u["adv"], "select situacao from processos where id = $1", [p2]);
     expect(fim!.situacao).toBe("homologado");
   });
 
@@ -231,7 +237,7 @@ describe.skipIf(!habilitado)("fluxo CCA → CPMA → Jurídico (PostgreSQL real)
     await expect(sql(null, "select listar_usuarios()")).resolves.toEqual([]); // sem usuário logado, nada
     const lista2 = await sql(u["admin"], "select id, nome, email, papeis::text[] as papeis from listar_usuarios()");
     expect((lista2 as { papeis: unknown }[]).every((x) => Array.isArray(x.papeis))).toBe(true); // regressão: enum[] chegava como "{admin}"
-    expect(lista2).toHaveLength(7);
+    expect(lista2).toHaveLength(8);
     await falha(u["admin"], "select definir_papeis($1, '{cca}'::app_role[])", [u["admin"]], /próprio papel de administrador/);
   });
 });

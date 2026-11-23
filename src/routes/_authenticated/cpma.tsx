@@ -47,7 +47,7 @@ function Cpma() {
         return <section key={titulo}>
           <h2 className="mb-3 font-semibold">{titulo} ({visiveis.length})</h2>
           {!visiveis.length ? <p className="border-t py-4 text-sm text-muted-foreground">Nenhum processo nesta fila.</p> :
-            <div className="overflow-x-auto rounded-md border"><table className="w-full text-left text-sm">
+            <div className="tabela-rolavel rounded-md border"><table className="w-full text-left text-sm">
               <thead className="bg-muted text-muted-foreground"><tr><th className="p-3">Processo</th><th className="p-3">Espécie</th><th className="p-3">Abertura</th><th className="p-3">Situação</th><th className="p-3">Providência</th></tr></thead>
               <tbody>{visiveis.map((p) => {
                 const { receber, encaminharJuridico } = acoesCpma(p, sessao.papeis);

@@ -45,7 +45,7 @@ function ListaSaidaPagina() {
         <div className="text-base font-bold">IPEM-PE · {titulo}</div>
         <div className="text-xs">{CANAL[lista.canal]}{lista.titulo ? ` · ${lista.titulo}` : ""} · Legenda: E = entregue · D = devolvido · R = recusado · M = mudou-se</div>
       </div>
-      <div className="overflow-x-auto rounded-lg border bg-card print:border-0">
+      <div className="tabela-rolavel rounded-lg border bg-card print:border-0">
         <table className="w-full text-left text-sm print:text-xs">
           <thead className="bg-muted text-xs text-muted-foreground print:bg-transparent print:text-black">
             <tr>
