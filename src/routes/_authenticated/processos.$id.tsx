@@ -6,6 +6,7 @@ import { ArrowLeft, AlertTriangle, Inbox, UserRoundCheck } from "lucide-react";
 import { obterProcessoFn, tramitarFn } from "@/lib/processos.functions";
 import { listarFiscaisFn } from "@/lib/cadastros.functions";
 import { AcoesJuridico } from "@/components/juridico/AcoesJuridico";
+import { AcoesJulgamento, brl } from "@/components/juridico/AcoesJulgamento";
 import { formatarDocumento } from "@/lib/documento";
 import { usePerfis, useSessao } from "@/lib/auth";
 import { Cabecalho } from "@/components/AppShell";
@@ -17,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { acoesCpma, etapaCpma, podeReceberNaArea, type AreaProcesso } from "@/lib/cpma";
-import { CANAL, dataBR, erroMsg, EVENTO, RESULTADO, SETOR, SETOR_TECNICO, SITUACAO, type SetorTecnico } from "@/lib/rotulos";
+import { CANAL, dataBR, erroMsg, EVENTO, RESULTADO, SETOR, SETOR_TECNICO, sgiEsperado, SITUACAO, type SetorTecnico } from "@/lib/rotulos";
 
 export const Route = createFileRoute("/_authenticated/processos/$id")({
   validateSearch: (search: Record<string, unknown>): { area?: AreaProcesso } => {
@@ -52,6 +53,7 @@ function DetalheProcesso() {
   const p = det?.processo;
   const eventos = det?.eventos ?? [];
   const notificacoes = det?.notificacoes ?? [];
+  const julgamento = det?.julgamento ?? null;
   const { data: fiscais = [] } = useQuery({ queryKey: ["fiscais"], queryFn: () => listarFiscaisFn() });
 
   const acao = useMutation({
@@ -111,6 +113,16 @@ function DetalheProcesso() {
                 : []),
               ...(p.ciencia_em ? [["Ciência da notificação", dataBR(p.ciencia_em)], ["Prazo de defesa até", dataBR(p.vencimento_defesa)]] : []),
               ...(p.defesa_em ? [["Defesa protocolada em", dataBR(p.defesa_em)]] : []),
+              ...(julgamento
+                ? [
+                    ["Decisão", julgamento.decisao === "multa" ? `Multa de ${brl(julgamento.valor_multa)}` : "Arquivamento"],
+                    ["Julgado por", `${perfis?.get(julgamento.julgador_id) ?? "—"} · ${dataBR(julgamento.julgado_em, true)}`],
+                    ["Fundamentação", julgamento.fundamentacao],
+                    ["Assinatura do Presidente", julgamento.assinado_em ? `${perfis?.get(julgamento.assinado_por ?? "") ?? "—"} · ${dataBR(julgamento.assinado_em, true)}` : "Pendente"],
+                    ["Homologação", julgamento.homologado_em ? `${perfis?.get(julgamento.homologado_por ?? "") ?? "—"} · ${dataBR(julgamento.homologado_em, true)}` : "Pendente"],
+                  ]
+                : []),
+              ["No SGI deve constar em (conferir)", sgiEsperado(p.situacao)],
             ].map(([k, v]) => (
               <div key={k} className="bg-card p-4">
                 <div className="text-xs text-muted-foreground">{k}</div>
@@ -162,6 +174,7 @@ function DetalheProcesso() {
                 </Button>
               )}
               {juridicoNoSetor && <AcoesJuridico p={p} notificacoes={notificacoes} />}
+              {p.setor_atual === "JURIDICO" && comSetor && <AcoesJulgamento p={p} julgamento={julgamento} papeis={sessao.papeis} />}
               {ccaAtivo && <Button onClick={() => setDialogo("corrigir")}>Corrigir e reencaminhar ao CPMA</Button>}
               {doSetorAtual && (
                 <Button variant="ghost" onClick={() => setDialogo("obs")}>
@@ -258,8 +271,12 @@ function proxima(p: { situacao: string; digitalizado_em: string | null; fiscal_i
     case "notificacao_enviada": return "Jurídico: registrar a entrega (data e quem recebeu) ou o motivo de não entrega. O prazo de defesa só corre depois disso.";
     case "notificacao_frustrada": return "Notificação não entregue. Corrija os dados se preciso e inclua em nova lista de saída (outro canal, se for o caso).";
     case "aguardando_defesa": return "Prazo de defesa correndo. Registre a defesa ou, vencido o prazo, encerre sem defesa.";
-    case "com_defesa": return "Defesa registrada. Próxima etapa (julgamento) ainda será implementada.";
-    case "sem_defesa": return "Prazo encerrado sem defesa. Próxima etapa (julgamento) ainda será implementada.";
+    case "com_defesa":
+    case "sem_defesa": return "Aguardando julgamento pelo advogado da espécie (decisão, valor da multa e fundamentação).";
+    case "julgamento_devolvido": return "Devolvido ao julgamento: o advogado da espécie deve rejulgar.";
+    case "julgado": return "Julgado. Aguardando a assinatura do Presidente.";
+    case "assinado_presidente": return "Assinado pelo Presidente. Aguardando a homologação.";
+    case "homologado": return "Homologado. As próximas etapas (guia GRU, Correios, recurso, cobrança) ainda serão implementadas.";
     case "aguardando_cca": return "O CCA deve confirmar o recebimento da devolução.";
     case "em_correcao_cca": return "CCA: corrigir o cadastro e reencaminhar ao CPMA.";
     default: return "—";

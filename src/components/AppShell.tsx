@@ -7,9 +7,10 @@ import { useSessao } from "@/lib/auth";
 import { PAPEIS, type Papel } from "@/lib/rotulos";
 
 const NAV: { to: string; rotulo: string; icon: typeof LayoutList; papeis: Papel[] }[] = [
-  { to: "/painel", rotulo: "Painel e busca", icon: LayoutList, papeis: ["cca", "cpma", "juridico", "gestao"] },
+  { to: "/painel", rotulo: "Painel e busca", icon: LayoutList, papeis: ["cca", "cpma", "juridico", "gestao", "presidente", "homologador"] },
   { to: "/cpma", rotulo: "CPMA · Recebimento", icon: Inbox, papeis: ["cpma"] },
   { to: "/juridico", rotulo: "Jurídico · Recebimento", icon: Scale, papeis: ["juridico"] },
+  { to: "/julgamento", rotulo: "Julgamento e assinatura", icon: Scale, papeis: ["juridico", "presidente", "homologador"] },
   { to: "/importacao", rotulo: "Importação JR5260", icon: FileUp, papeis: ["cca"] },
   { to: "/fiscais", rotulo: "Fiscais", icon: Users, papeis: ["cpma", "admin"] },
   { to: "/especies", rotulo: "Espécies", icon: Tags, papeis: ["admin", "cpma", "cca"] },

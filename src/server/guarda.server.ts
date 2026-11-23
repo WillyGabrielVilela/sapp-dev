@@ -5,4 +5,4 @@ export function exigirPapel(sessao: Sessao, ...papeis: Papel[]) {
   if (!papeis.some((p) => sessao.papeis.includes(p))) throw new Error("Permissão negada");
 }
 
-export const PAPEIS_SETORES: Papel[] = ["cca", "cpma", "juridico", "gestao"];
+export const PAPEIS_SETORES: Papel[] = ["cca", "cpma", "juridico", "gestao", "presidente", "homologador"];

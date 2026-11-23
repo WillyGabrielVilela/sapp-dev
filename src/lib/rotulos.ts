@@ -7,6 +7,8 @@ export const PAPEIS: { valor: Papel; rotulo: string }[] = [
   { valor: "cpma", rotulo: "CPMA" },
   { valor: "juridico", rotulo: "Jurídico" },
   { valor: "gestao", rotulo: "Gestão" },
+  { valor: "presidente", rotulo: "Presidente" },
+  { valor: "homologador", rotulo: "Homologador" },
   { valor: "admin", rotulo: "Administrador" },
 ];
 
@@ -24,6 +26,10 @@ export const SITUACAO: Record<Situacao, string> = {
   aguardando_defesa: "Aguardando defesa (prazo correndo)",
   com_defesa: "Com defesa — aguardando julgamento",
   sem_defesa: "Sem defesa — aguardando julgamento",
+  julgamento_devolvido: "Devolvido ao julgamento",
+  julgado: "Julgado — aguardando assinatura do Presidente",
+  assinado_presidente: "Assinado — aguardando homologação",
+  homologado: "Homologado — aguarda a etapa da GRU",
 };
 
 export const SETOR_TECNICO: Record<SetorTecnico, string> = {
@@ -50,6 +56,9 @@ export const EVENTO: Record<string, string> = {
   NOTIFICACAO_FRUSTRADA: "Notificação não entregue",
   DEFESA_REGISTRADA: "Defesa registrada",
   PRAZO_ENCERRADO: "Prazo de defesa encerrado",
+  JULGADO: "Julgado",
+  ASSINADO_PRESIDENTE: "Assinado pelo Presidente",
+  HOMOLOGADO: "Homologado",
 };
 
 export const CANAL: Record<CanalNotificacao, string> = {
@@ -85,4 +94,32 @@ export function dataBR(iso: string | null | undefined, comHora = false) {
 export function erroMsg(e: unknown) {
   if (e && typeof e === "object" && "message" in e) return String((e as { message: string }).message);
   return "Erro inesperado";
+}
+
+/** Repositório do SGI em que o processo deveria constar (para a auditoria do SGI sobre o SAPP). A CONFIRMAR com o Inmetro. */
+export function sgiEsperado(situacao: Situacao): string {
+  switch (situacao) {
+    case "aguardando_cpma":
+    case "em_conferencia_cpma":
+    case "pronto_juridico":
+    case "aguardando_juridico":
+    case "aguardando_cca":
+    case "em_correcao_cca":
+      return "Processos cadastrados (digitalização pelo CPMA)";
+    case "recebido_juridico":
+    case "protocolado_juridico":
+    case "notificacao_enviada":
+    case "notificacao_frustrada":
+      return "Processos analisados (visto pelo Jurídico → carta de autuação)";
+    case "aguardando_defesa":
+      return "Processos analisados — ciência registrada, em prazo de defesa";
+    case "com_defesa":
+    case "sem_defesa":
+    case "julgamento_devolvido":
+    case "julgado":
+    case "assinado_presidente":
+      return "Processos aptos para julgamento";
+    case "homologado":
+      return "A definir com o Inmetro (pós-julgamento)";
+  }
 }

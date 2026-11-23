@@ -16,6 +16,7 @@ import { Route as AuthenticatedCpmaRouteImport } from './routes/_authenticated/c
 import { Route as AuthenticatedEspeciesRouteImport } from './routes/_authenticated/especies'
 import { Route as AuthenticatedFiscaisRouteImport } from './routes/_authenticated/fiscais'
 import { Route as AuthenticatedImportacaoRouteImport } from './routes/_authenticated/importacao'
+import { Route as AuthenticatedJulgamentoRouteImport } from './routes/_authenticated/julgamento'
 import { Route as AuthenticatedJuridicoRouteImport } from './routes/_authenticated/juridico'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
@@ -56,6 +57,11 @@ const AuthenticatedImportacaoRoute = AuthenticatedImportacaoRouteImport.update({
   path: '/importacao',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedJulgamentoRoute = AuthenticatedJulgamentoRouteImport.update({
+  id: '/julgamento',
+  path: '/julgamento',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedJuridicoRoute = AuthenticatedJuridicoRouteImport.update({
   id: '/juridico',
   path: '/juridico',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/especies': typeof AuthenticatedEspeciesRoute
   '/fiscais': typeof AuthenticatedFiscaisRoute
   '/importacao': typeof AuthenticatedImportacaoRoute
+  '/julgamento': typeof AuthenticatedJulgamentoRoute
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/especies': typeof AuthenticatedEspeciesRoute
   '/fiscais': typeof AuthenticatedFiscaisRoute
   '/importacao': typeof AuthenticatedImportacaoRoute
+  '/julgamento': typeof AuthenticatedJulgamentoRoute
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/_authenticated/especies': typeof AuthenticatedEspeciesRoute
   '/_authenticated/fiscais': typeof AuthenticatedFiscaisRoute
   '/_authenticated/importacao': typeof AuthenticatedImportacaoRoute
+  '/_authenticated/julgamento': typeof AuthenticatedJulgamentoRoute
   '/_authenticated/juridico': typeof AuthenticatedJuridicoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/especies'
     | '/fiscais'
     | '/importacao'
+    | '/julgamento'
     | '/juridico'
     | '/painel'
     | '/usuarios'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/especies'
     | '/fiscais'
     | '/importacao'
+    | '/julgamento'
     | '/juridico'
     | '/painel'
     | '/usuarios'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/_authenticated/especies'
     | '/_authenticated/fiscais'
     | '/_authenticated/importacao'
+    | '/_authenticated/julgamento'
     | '/_authenticated/juridico'
     | '/_authenticated/painel'
     | '/_authenticated/usuarios'
@@ -225,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImportacaoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/julgamento': {
+      id: '/_authenticated/julgamento'
+      path: '/julgamento'
+      fullPath: '/julgamento'
+      preLoaderRoute: typeof AuthenticatedJulgamentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/juridico': {
       id: '/_authenticated/juridico'
       path: '/juridico'
@@ -268,6 +287,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEspeciesRoute: typeof AuthenticatedEspeciesRoute
   AuthenticatedFiscaisRoute: typeof AuthenticatedFiscaisRoute
   AuthenticatedImportacaoRoute: typeof AuthenticatedImportacaoRoute
+  AuthenticatedJulgamentoRoute: typeof AuthenticatedJulgamentoRoute
   AuthenticatedJuridicoRoute: typeof AuthenticatedJuridicoRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
@@ -280,6 +300,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEspeciesRoute: AuthenticatedEspeciesRoute,
   AuthenticatedFiscaisRoute: AuthenticatedFiscaisRoute,
   AuthenticatedImportacaoRoute: AuthenticatedImportacaoRoute,
+  AuthenticatedJulgamentoRoute: AuthenticatedJulgamentoRoute,
   AuthenticatedJuridicoRoute: AuthenticatedJuridicoRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,

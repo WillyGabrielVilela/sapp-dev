@@ -16,4 +16,6 @@
 ## Jurídico
 - [x] Fase 1: protocolo, lista de saída, desfecho da entrega, prazo de defesa, defesa / sem defesa.
 - [ ] Validar com a GEJUR as hipóteses de `docs/juridico-fase1.md`.
-- [ ] Fase 2: julgamento (divide por espécie), homologação (Presidente), guia GRU, recurso, cobrança.
+- [x] Fase 2A: julgamento por espécie, assinatura do Presidente, homologação.
+- [ ] Fase 2B: guia GRU (30% à vista), Correios, recurso (instância superior do Inmetro; prazo a definir), dívida ativa.
+- [ ] Conferir com o Inmetro o mapeamento SGI (`sgiEsperado`).

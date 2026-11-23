@@ -32,3 +32,30 @@ Depois do protocolo o Jurídico não devolve mais ao CPMA. Julgamento, "divide p
 ## Pendências conhecidas
 - Listagem de processos carrega tudo no navegador. Com ~8,6 mil processos/ano, paginar e filtrar no servidor é o próximo ajuste.
 - Sem tabela de feriados; sem alerta automático de prazo vencendo.
+
+---
+
+# Fase 2A — julgamento → assinatura do Presidente → homologação
+
+Regras confirmadas pelo IPEM-PE: advogados julgam **por espécie**; o advogado decide e atribui o **valor da multa**; o **Presidente assina**; a **homologação só vem depois da assinatura** (usuários com essa atribuição). Essa ordem difere do rascunho, em que "Homologa" vinha antes do Presidente.
+
+## Fluxo
+`com_defesa` / `sem_defesa` → **Julgar** (advogado designado para a espécie: multa + valor, ou arquivamento; fundamentação obrigatória) → `julgado` → **Presidente assina** → `assinado_presidente` → **Homologador homologa** → `homologado`.
+Presidente (antes de assinar) e homologador (antes de homologar) podem **devolver ao julgamento** com justificativa → `julgamento_devolvido` → o advogado rejulga. Cada decisão, inclusive as revisadas, fica no histórico imutável.
+
+## Perfis novos
+`presidente` e `homologador` (atribuídos em *Usuários e perfis*). A distribuição por espécie é feita pelo administrador na mesma tela ("Quem julga cada espécie").
+Controle: **quem julgou o processo não pode homologá-lo**.
+
+## Premissas a confirmar
+- Com defesa e sem defesa seguem o mesmo caminho de julgamento (o rascunho não tem seta saindo de "Com defesa").
+- Decisões possíveis: multa ou arquivamento.
+- Processo sem espécie não pode ser julgado.
+
+## Conferência com o SGI
+Cada processo mostra "No SGI deve constar em": Processos cadastrados (digitalização pelo CPMA) → Processos analisados (visto pelo Jurídico, vira carta de autuação) → Processos aptos para julgamento (ciência dada e rito de defesa concluído). O mapeamento de `sgiEsperado()` (`src/lib/rotulos.ts`) é **hipótese a confirmar com o Inmetro**.
+
+## Próximas fases (informações já recebidas)
+- GRU: **30% de desconto à vista** (o valor com desconto já aparece no julgamento, só como informação).
+- Recurso: julgado pela **instância superior do Inmetro**; **prazo indefinido** — precisa ser definido antes de implementar.
+- Cobrança: **dívida ativa** é a etapa seguinte.

@@ -31,7 +31,7 @@ function Painel() {
     queryFn: () => listarProcessosFn(),
   });
   if (!sessao) return null;
-  if (!sessao.tem("cca", "cpma", "juridico", "gestao")) return <SemPermissao />;
+  if (!sessao.tem("cca", "cpma", "juridico", "gestao", "presidente", "homologador")) return <SemPermissao />;
 
   const termo = busca.trim();
   const resultados = termo ? processos.filter((p) => p.numero.includes(termo) || (p.numero_ai ?? "").includes(termo)) : [];
@@ -48,13 +48,18 @@ function Painel() {
     add("CPMA · Em conferência e digitalização", (p) => p.setor_atual === "CPMA" && !p.setor_destino);
     add("CPMA · Enviados, aguardando o Jurídico receber", (p) => p.setor_atual === "CPMA" && p.setor_destino === "JURIDICO");
   }
+  if (sessao.tem("presidente") && !sessao.tem("juridico")) add("Presidência · A assinar", (p) => p.situacao === "julgado");
+  if (sessao.tem("homologador") && !sessao.tem("juridico")) add("Homologação · A homologar", (p) => p.situacao === "assinado_presidente");
   if (sessao.tem("juridico")) {
     add("Jurídico · A receber", (p) => p.setor_destino === "JURIDICO");
     add("Jurídico · A protocolar", (p) => p.situacao === "recebido_juridico");
     add("Jurídico · A notificar (protocolados e não entregues)", (p) => p.situacao === "protocolado_juridico" || p.situacao === "notificacao_frustrada");
     add("Jurídico · Entregas a registrar", (p) => p.situacao === "notificacao_enviada");
     add("Jurídico · Prazo de defesa correndo", (p) => p.situacao === "aguardando_defesa");
-    add("Jurídico · Com ou sem defesa (aguardando julgamento)", (p) => p.situacao === "com_defesa" || p.situacao === "sem_defesa");
+    add("Jurídico · Aguardando julgamento", (p) => p.situacao === "com_defesa" || p.situacao === "sem_defesa" || p.situacao === "julgamento_devolvido");
+    add("Jurídico · Julgados, aguardando o Presidente", (p) => p.situacao === "julgado");
+    add("Jurídico · Assinados, aguardando homologação", (p) => p.situacao === "assinado_presidente");
+    add("Jurídico · Homologados", (p) => p.situacao === "homologado");
   }
 
   const contagem = (Object.keys(SITUACAO) as (keyof typeof SITUACAO)[]).map((s) => ({

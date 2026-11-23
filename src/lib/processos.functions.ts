@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { exigirSessao } from "@/lib/auth-middleware";
-import type { Evento, Notificacao, Processo } from "@/lib/tipos";
+import type { Evento, Julgamento, Notificacao, Processo } from "@/lib/tipos";
 
 export const listarProcessosFn = createServerFn({ method: "GET" })
   .middleware([exigirSessao])
@@ -15,7 +15,7 @@ export const listarProcessosFn = createServerFn({ method: "GET" })
 export const obterProcessoFn = createServerFn({ method: "GET" })
   .middleware([exigirSessao])
   .inputValidator(z.object({ id: z.string().uuid() }))
-  .handler(async ({ context, data }): Promise<{ processo: Processo; eventos: Evento[]; notificacoes: Notificacao[] } | null> => {
+  .handler(async ({ context, data }): Promise<{ processo: Processo; eventos: Evento[]; notificacoes: Notificacao[]; julgamento: Julgamento | null } | null> => {
     const { comUsuario } = await import("@/server/db.server");
     const { exigirPapel, PAPEIS_SETORES } = await import("@/server/guarda.server");
     exigirPapel(context.sessao, ...PAPEIS_SETORES);
@@ -26,7 +26,8 @@ export const obterProcessoFn = createServerFn({ method: "GET" })
       await c.query("insert into acesso_logs (processo_id, usuario_id) values ($1, $2)", [p.id, context.sessao.id]);
       const eventos = (await c.query<Evento>("select * from eventos where processo_id = $1 order by criado_em, id", [p.id])).rows;
       const notificacoes = (await c.query<Notificacao>("select * from notificacoes where processo_id = $1 order by criada_em", [p.id])).rows;
-      return { processo: p, eventos, notificacoes };
+      const julgamento = (await c.query<Julgamento>("select * from julgamentos where processo_id = $1", [p.id])).rows[0] ?? null;
+      return { processo: p, eventos, notificacoes, julgamento };
     });
   });
 

@@ -1,7 +1,7 @@
 // Tipos de domínio do SAPP (substituem os tipos gerados pelo Supabase).
 // Devem acompanhar db/migrations/*.sql. Datas "date" chegam como "YYYY-MM-DD"; timestamps, como ISO 8601.
 
-export type Papel = "cca" | "cpma" | "juridico" | "gestao" | "admin";
+export type Papel = "cca" | "cpma" | "juridico" | "gestao" | "admin" | "presidente" | "homologador";
 export type SetorCodigo = "CCA" | "CPMA" | "JURIDICO";
 export type SetorTecnico = "METROLOGIA" | "QUALIDADE" | "PRE_EMBALADOS";
 
@@ -18,7 +18,11 @@ export type Situacao =
   | "notificacao_frustrada"
   | "aguardando_defesa"
   | "com_defesa"
-  | "sem_defesa";
+  | "sem_defesa"
+  | "julgamento_devolvido"
+  | "julgado"
+  | "assinado_presidente"
+  | "homologado";
 
 export type TipoEvento =
   | "IMPORTADO"
@@ -35,7 +39,10 @@ export type TipoEvento =
   | "CIENCIA_REGISTRADA"
   | "NOTIFICACAO_FRUSTRADA"
   | "DEFESA_REGISTRADA"
-  | "PRAZO_ENCERRADO";
+  | "PRAZO_ENCERRADO"
+  | "JULGADO"
+  | "ASSINADO_PRESIDENTE"
+  | "HOMOLOGADO";
 
 export type CanalNotificacao = "correios" | "whatsapp" | "doe" | "em_maos";
 export type ResultadoNotificacao = "pendente" | "entregue" | "devolvido" | "recusado" | "mudou_se";
@@ -162,3 +169,18 @@ export type ItemLista = Notificacao & {
 
 export type Sessao = { id: string; email: string; nome: string; papeis: Papel[] };
 export type UsuarioAdmin = { id: string; nome: string; email: string; papeis: Papel[] };
+
+export type DecisaoJulgamento = "multa" | "arquivamento";
+export type Julgamento = {
+  processo_id: string;
+  julgador_id: string;
+  decisao: DecisaoJulgamento;
+  valor_multa: string | null; // numeric chega como texto, ex.: "1234.50"
+  fundamentacao: string;
+  julgado_em: string;
+  assinado_por: string | null;
+  assinado_em: string | null;
+  homologado_por: string | null;
+  homologado_em: string | null;
+};
+export type JulgadorEspecies = { id: string; nome: string; email: string; especies: string[] };
