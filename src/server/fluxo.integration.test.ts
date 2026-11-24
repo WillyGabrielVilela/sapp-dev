@@ -275,6 +275,32 @@ describe.skipIf(!habilitado)("fluxo CCA → CPMA → Jurídico (PostgreSQL real)
     expect(st!.situacao).toBe("sem_defesa");
   });
 
+  it("lote: homologa e assina vários, relata os que não podem avançar sem derrubar os demais", async () => {
+    const { executarLote } = await import("./lote.server");
+    const novo: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      const [r] = await sql<{ id: string }>(null, "insert into processos (numero, especie, setor_atual, situacao) values ($1,'CT','JURIDICO','julgado') returning id", [num(900 + i)]);
+      // o 3º foi julgado pelo próprio homologador: não pode homologar
+      await pool().query("insert into julgamentos (processo_id, julgador_id, decisao, valor_multa, fundamentacao) values ($1,$2,'multa',50,'fundamentação do lote')", [r!.id, i === 2 ? u["hom"] : u["adv"]]);
+      novo.push(r!.id);
+    }
+    const semPapel = await executarLote(u["cca"], novo, "homologar_processo", "");
+    expect(semPapel.feitos).toBe(0);
+    expect(semPapel.falhas.every((f) => /Permissão negada/.test(f.motivo))).toBe(true);
+    const h = await executarLote(u["hom"], [...novo, novo[0]!], "homologar_processo", "lote ok"); // id repetido é ignorado
+    expect(h.feitos).toBe(2);
+    expect(h.falhas).toHaveLength(1);
+    expect(h.falhas[0]!.motivo).toMatch(/Quem julgou/);
+    const sit = await sql<{ situacao: string }>(null, "select situacao from processos where id = any($1::uuid[]) order by numero", [novo]);
+    expect(sit.map((x) => x.situacao)).toEqual(["homologado", "homologado", "julgado"]);
+    const a = await executarLote(u["pres"], novo, "assinar_presidente", "");
+    expect(a.feitos).toBe(2);
+    expect(a.falhas).toHaveLength(1); // o 3º ainda não foi homologado
+    expect(a.falhas[0]!.motivo).toMatch(/depois da homologação/);
+    const fim = await sql<{ situacao: string }>(null, "select situacao from processos where id = any($1::uuid[]) order by numero", [novo]);
+    expect(fim.map((x) => x.situacao)).toEqual(["assinado_presidente", "assinado_presidente", "julgado"]);
+  });
+
   it("histórico é imutável e inclui toda a trilha", async () => {
     await expect(pool().query("update eventos set observacao = 'x'")).rejects.toThrow(/não podem ser editados/);
     await expect(pool().query("delete from eventos")).rejects.toThrow(/não podem ser editados/);

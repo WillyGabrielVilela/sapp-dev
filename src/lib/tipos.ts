@@ -185,3 +185,5 @@ export type Julgamento = {
   homologado_em: string | null;
 };
 export type JulgadorEspecies = { id: string; nome: string; email: string; especies: string[] }; // especies vazio = julga todas (padrão)
+
+export type ResultadoLote = { feitos: number; falhas: { numero: string; motivo: string }[] };

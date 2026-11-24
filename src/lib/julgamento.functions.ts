@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { exigirSessao } from "@/lib/auth-middleware";
-import type { JulgadorEspecies } from "@/lib/tipos";
+import type { JulgadorEspecies, ResultadoLote } from "@/lib/tipos";
 
 const ID = z.string().uuid();
 
@@ -88,4 +88,27 @@ export const definirEspeciesJulgadorFn = createServerFn({ method: "POST" })
     const { comUsuario } = await import("@/server/db.server");
     await comUsuario(context.sessao.id, (c) => c.query("select definir_especies_julgador($1, $2::text[])", [data.id, data.especies]));
     return { ok: true as const };
+  });
+
+// ---------- ações em lote (checkboxes) ----------
+const LOTE = z.object({ processoIds: z.array(ID).min(1).max(200), obs: z.string().max(2000) });
+
+export const homologarLoteFn = createServerFn({ method: "POST" })
+  .middleware([exigirSessao])
+  .inputValidator(LOTE)
+  .handler(async ({ context, data }): Promise<ResultadoLote> => {
+    const { exigirPapel } = await import("@/server/guarda.server");
+    const { executarLote } = await import("@/server/lote.server");
+    exigirPapel(context.sessao, "homologador");
+    return executarLote(context.sessao.id, data.processoIds, "homologar_processo", data.obs);
+  });
+
+export const assinarLoteFn = createServerFn({ method: "POST" })
+  .middleware([exigirSessao])
+  .inputValidator(LOTE)
+  .handler(async ({ context, data }): Promise<ResultadoLote> => {
+    const { exigirPapel } = await import("@/server/guarda.server");
+    const { executarLote } = await import("@/server/lote.server");
+    exigirPapel(context.sessao, "presidente");
+    return executarLote(context.sessao.id, data.processoIds, "assinar_presidente", data.obs);
   });

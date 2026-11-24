@@ -62,6 +62,9 @@ Cada processo mostra "No SGI deve constar em": Processos cadastrados (digitaliza
 - Recurso: julgado pela **instância superior do Inmetro**; **prazo indefinido** — precisa ser definido antes de implementar.
 - Cobrança: **dívida ativa** é a etapa seguinte.
 
+## Ações em lote
+Nas filas "Aguardando homologação" (homologador) e "Aguardando assinatura do Presidente" há checkboxes e o botão "Homologar/Assinar selecionados", com confirmação e observação única. Cada processo é conferido individualmente (as mesmas regras de sempre, ex.: quem julgou não homologa): os que não puderem avançar são listados no final e os demais seguem. Cada um gera seu próprio evento no histórico.
+
 ## Prazo de defesa automático
 Vencido o prazo de defesa sem defesa registrada, o processo passa **sozinho** para `sem_defesa`, com evento "automático" atribuído ao ator **Sistema**. Não há agendador: a rotina `encerrar_prazos_vencidos()` roda sempre que o sistema lista ou abre processos (o que acontece em toda sessão de trabalho). Se uma defesa chegar depois (ex.: pelos Correios) e o processo ainda não tiver sido julgado, ela pode ser registrada e fica marcada "FORA DO PRAZO". Há também o botão **Registrar sem defesa** (processo aguardando defesa): depois do vencimento basta confirmar; **antes do vencimento** exige o motivo (ex.: renúncia expressa ao prazo), que fica no histórico (migração 0007). Regra a validar com a GEJUR.
 

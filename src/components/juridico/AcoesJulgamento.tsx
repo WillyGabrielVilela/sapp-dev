@@ -41,7 +41,9 @@ export function AcoesJulgamento({ p, julgamento, papeis }: { p: Processo; julgam
       {podeJulgar && <Button onClick={() => setDialogo("julgar")}>{p.situacao === "julgamento_devolvido" ? "Rejulgar" : "Julgar"}</Button>}
       {semDesignacao && (
         <span className="self-center text-sm text-muted-foreground">
-          {p.especie ? `Você não está designado para a espécie ${p.especie}.` : "Processo sem espécie."}
+          {p.especie
+            ? `Você só julga as espécies ${minhas.join(", ")}; este processo é da espécie ${p.especie}. Um homologador pode liberar ("Quem julga cada espécie").`
+            : "Processo sem espécie."}
         </span>
       )}
       {podeHomologar && <Button onClick={() => setDialogo("homologar")}>Homologar</Button>}
