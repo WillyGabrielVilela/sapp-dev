@@ -25,3 +25,17 @@ export async function anteciparPrazo(usuarioId: string, processoId: string, dias
     );
   });
 }
+
+/** Recua o vencimento da GRU para testar "não pago" sem esperar. */
+export async function anteciparGru(usuarioId: string, processoId: string, dias: number) {
+  if (!modoTeste()) throw new Error("Modo de teste desligado");
+  await comUsuario(usuarioId, async (c) => {
+    const { rows } = await c.query<{ situacao: string }>("select situacao from processos where id = $1 for update", [processoId]);
+    if (rows[0]?.situacao !== "gru_gerada") throw new Error("Só vale para processo com GRU a classificar");
+    await c.query("update grus set vencimento = vencimento - $2::int where processo_id = $1", [processoId, dias]);
+    await c.query(
+      "insert into eventos (processo_id, tipo, setor_origem, usuario_id, observacao) values ($1, 'OBSERVACAO', 'JURIDICO', $2, $3)",
+      [processoId, usuarioId, `TESTE: vencimento da GRU recuado em ${dias} dias para simular a passagem do tempo (não é fato real)`],
+    );
+  });
+}

@@ -12,14 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedClassificacaoGruRouteImport } from './routes/_authenticated/classificacao-gru'
 import { Route as AuthenticatedCpmaRouteImport } from './routes/_authenticated/cpma'
+import { Route as AuthenticatedDividaAtivaRouteImport } from './routes/_authenticated/divida-ativa'
 import { Route as AuthenticatedEspeciesRouteImport } from './routes/_authenticated/especies'
 import { Route as AuthenticatedFiscaisRouteImport } from './routes/_authenticated/fiscais'
 import { Route as AuthenticatedImportacaoRouteImport } from './routes/_authenticated/importacao'
 import { Route as AuthenticatedJulgamentoRouteImport } from './routes/_authenticated/julgamento'
 import { Route as AuthenticatedJuridicoRouteImport } from './routes/_authenticated/juridico'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedParametrosRouteImport } from './routes/_authenticated/parametros'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
+import { Route as AuthenticatedEspelhoGruProcessoIdRouteImport } from './routes/_authenticated/espelho-gru.$processoId'
 import { Route as AuthenticatedListasSaidaIdRouteImport } from './routes/_authenticated/listas-saida.$id'
 import { Route as AuthenticatedProcessosIdRouteImport } from './routes/_authenticated/processos.$id'
 
@@ -37,11 +41,23 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedClassificacaoGruRoute =
+  AuthenticatedClassificacaoGruRouteImport.update({
+    id: '/classificacao-gru',
+    path: '/classificacao-gru',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCpmaRoute = AuthenticatedCpmaRouteImport.update({
   id: '/cpma',
   path: '/cpma',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDividaAtivaRoute =
+  AuthenticatedDividaAtivaRouteImport.update({
+    id: '/divida-ativa',
+    path: '/divida-ativa',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedEspeciesRoute = AuthenticatedEspeciesRouteImport.update({
   id: '/especies',
   path: '/especies',
@@ -72,11 +88,22 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedParametrosRoute = AuthenticatedParametrosRouteImport.update({
+  id: '/parametros',
+  path: '/parametros',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEspelhoGruProcessoIdRoute =
+  AuthenticatedEspelhoGruProcessoIdRouteImport.update({
+    id: '/espelho-gru/$processoId',
+    path: '/espelho-gru/$processoId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedListasSaidaIdRoute =
   AuthenticatedListasSaidaIdRouteImport.update({
     id: '/listas-saida/$id',
@@ -93,28 +120,36 @@ const AuthenticatedProcessosIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/classificacao-gru': typeof AuthenticatedClassificacaoGruRoute
   '/cpma': typeof AuthenticatedCpmaRoute
+  '/divida-ativa': typeof AuthenticatedDividaAtivaRoute
   '/especies': typeof AuthenticatedEspeciesRoute
   '/fiscais': typeof AuthenticatedFiscaisRoute
   '/importacao': typeof AuthenticatedImportacaoRoute
   '/julgamento': typeof AuthenticatedJulgamentoRoute
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/parametros': typeof AuthenticatedParametrosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/espelho-gru/$processoId': typeof AuthenticatedEspelhoGruProcessoIdRoute
   '/listas-saida/$id': typeof AuthenticatedListasSaidaIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/classificacao-gru': typeof AuthenticatedClassificacaoGruRoute
   '/cpma': typeof AuthenticatedCpmaRoute
+  '/divida-ativa': typeof AuthenticatedDividaAtivaRoute
   '/especies': typeof AuthenticatedEspeciesRoute
   '/fiscais': typeof AuthenticatedFiscaisRoute
   '/importacao': typeof AuthenticatedImportacaoRoute
   '/julgamento': typeof AuthenticatedJulgamentoRoute
   '/juridico': typeof AuthenticatedJuridicoRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/parametros': typeof AuthenticatedParametrosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/espelho-gru/$processoId': typeof AuthenticatedEspelhoGruProcessoIdRoute
   '/listas-saida/$id': typeof AuthenticatedListasSaidaIdRoute
   '/processos/$id': typeof AuthenticatedProcessosIdRoute
 }
@@ -123,14 +158,18 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/classificacao-gru': typeof AuthenticatedClassificacaoGruRoute
   '/_authenticated/cpma': typeof AuthenticatedCpmaRoute
+  '/_authenticated/divida-ativa': typeof AuthenticatedDividaAtivaRoute
   '/_authenticated/especies': typeof AuthenticatedEspeciesRoute
   '/_authenticated/fiscais': typeof AuthenticatedFiscaisRoute
   '/_authenticated/importacao': typeof AuthenticatedImportacaoRoute
   '/_authenticated/julgamento': typeof AuthenticatedJulgamentoRoute
   '/_authenticated/juridico': typeof AuthenticatedJuridicoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/parametros': typeof AuthenticatedParametrosRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
+  '/_authenticated/espelho-gru/$processoId': typeof AuthenticatedEspelhoGruProcessoIdRoute
   '/_authenticated/listas-saida/$id': typeof AuthenticatedListasSaidaIdRoute
   '/_authenticated/processos/$id': typeof AuthenticatedProcessosIdRoute
 }
@@ -139,28 +178,36 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/classificacao-gru'
     | '/cpma'
+    | '/divida-ativa'
     | '/especies'
     | '/fiscais'
     | '/importacao'
     | '/julgamento'
     | '/juridico'
     | '/painel'
+    | '/parametros'
     | '/usuarios'
+    | '/espelho-gru/$processoId'
     | '/listas-saida/$id'
     | '/processos/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/classificacao-gru'
     | '/cpma'
+    | '/divida-ativa'
     | '/especies'
     | '/fiscais'
     | '/importacao'
     | '/julgamento'
     | '/juridico'
     | '/painel'
+    | '/parametros'
     | '/usuarios'
+    | '/espelho-gru/$processoId'
     | '/listas-saida/$id'
     | '/processos/$id'
   id:
@@ -168,14 +215,18 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/classificacao-gru'
     | '/_authenticated/cpma'
+    | '/_authenticated/divida-ativa'
     | '/_authenticated/especies'
     | '/_authenticated/fiscais'
     | '/_authenticated/importacao'
     | '/_authenticated/julgamento'
     | '/_authenticated/juridico'
     | '/_authenticated/painel'
+    | '/_authenticated/parametros'
     | '/_authenticated/usuarios'
+    | '/_authenticated/espelho-gru/$processoId'
     | '/_authenticated/listas-saida/$id'
     | '/_authenticated/processos/$id'
   fileRoutesById: FileRoutesById
@@ -209,11 +260,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/classificacao-gru': {
+      id: '/_authenticated/classificacao-gru'
+      path: '/classificacao-gru'
+      fullPath: '/classificacao-gru'
+      preLoaderRoute: typeof AuthenticatedClassificacaoGruRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/cpma': {
       id: '/_authenticated/cpma'
       path: '/cpma'
       fullPath: '/cpma'
       preLoaderRoute: typeof AuthenticatedCpmaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/divida-ativa': {
+      id: '/_authenticated/divida-ativa'
+      path: '/divida-ativa'
+      fullPath: '/divida-ativa'
+      preLoaderRoute: typeof AuthenticatedDividaAtivaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/especies': {
@@ -258,11 +323,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/parametros': {
+      id: '/_authenticated/parametros'
+      path: '/parametros'
+      fullPath: '/parametros'
+      preLoaderRoute: typeof AuthenticatedParametrosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/usuarios': {
       id: '/_authenticated/usuarios'
       path: '/usuarios'
       fullPath: '/usuarios'
       preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/espelho-gru/$processoId': {
+      id: '/_authenticated/espelho-gru/$processoId'
+      path: '/espelho-gru/$processoId'
+      fullPath: '/espelho-gru/$processoId'
+      preLoaderRoute: typeof AuthenticatedEspelhoGruProcessoIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/listas-saida/$id': {
@@ -283,27 +362,36 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedClassificacaoGruRoute: typeof AuthenticatedClassificacaoGruRoute
   AuthenticatedCpmaRoute: typeof AuthenticatedCpmaRoute
+  AuthenticatedDividaAtivaRoute: typeof AuthenticatedDividaAtivaRoute
   AuthenticatedEspeciesRoute: typeof AuthenticatedEspeciesRoute
   AuthenticatedFiscaisRoute: typeof AuthenticatedFiscaisRoute
   AuthenticatedImportacaoRoute: typeof AuthenticatedImportacaoRoute
   AuthenticatedJulgamentoRoute: typeof AuthenticatedJulgamentoRoute
   AuthenticatedJuridicoRoute: typeof AuthenticatedJuridicoRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedParametrosRoute: typeof AuthenticatedParametrosRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
+  AuthenticatedEspelhoGruProcessoIdRoute: typeof AuthenticatedEspelhoGruProcessoIdRoute
   AuthenticatedListasSaidaIdRoute: typeof AuthenticatedListasSaidaIdRoute
   AuthenticatedProcessosIdRoute: typeof AuthenticatedProcessosIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedClassificacaoGruRoute: AuthenticatedClassificacaoGruRoute,
   AuthenticatedCpmaRoute: AuthenticatedCpmaRoute,
+  AuthenticatedDividaAtivaRoute: AuthenticatedDividaAtivaRoute,
   AuthenticatedEspeciesRoute: AuthenticatedEspeciesRoute,
   AuthenticatedFiscaisRoute: AuthenticatedFiscaisRoute,
   AuthenticatedImportacaoRoute: AuthenticatedImportacaoRoute,
   AuthenticatedJulgamentoRoute: AuthenticatedJulgamentoRoute,
   AuthenticatedJuridicoRoute: AuthenticatedJuridicoRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedParametrosRoute: AuthenticatedParametrosRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
+  AuthenticatedEspelhoGruProcessoIdRoute:
+    AuthenticatedEspelhoGruProcessoIdRoute,
   AuthenticatedListasSaidaIdRoute: AuthenticatedListasSaidaIdRoute,
   AuthenticatedProcessosIdRoute: AuthenticatedProcessosIdRoute,
 }

@@ -7,7 +7,7 @@ import type { ResultadoLote } from "@/lib/tipos";
 export async function executarLote(
   usuarioId: string,
   ids: string[],
-  fn: "homologar_processo" | "assinar_presidente",
+  fn: "homologar_processo" | "assinar_presidente" | "classificar_nao_pago",
   obs: string,
 ): Promise<ResultadoLote> {
   const unicos = [...new Set(ids)];

@@ -17,5 +17,7 @@
 - [x] Fase 1: protocolo, lista de saída, desfecho da entrega, prazo de defesa, defesa / sem defesa.
 - [ ] Validar com a GEJUR as hipóteses de `docs/juridico-fase1.md`.
 - [x] Fase 2A: advogado julga → homologador → Presidente → volta à Ger. Jurídica; prazo de defesa vencido segue sozinho.
-- [ ] Fase 3: guia GRU pela Ger. Jurídica (30% à vista), Correios, recurso (instância superior do Inmetro; prazo a definir), dívida ativa.
+- [x] Fase 3: registro da GRU pela Ger. Jurídica (desconto à vista 30% parametrizável, espelho imprimível).
+- [x] Fase 4A: classificação das GRUs (pago / em recurso / não pago) e listagem de dívida ativa para recobrança.
+- [ ] Fase 4B: envio ao autuado (Correios), prazo e resultado do recurso, regras do desconto à vista.
 - [ ] Conferir com o Inmetro o mapeamento SGI (`sgiEsperado`).

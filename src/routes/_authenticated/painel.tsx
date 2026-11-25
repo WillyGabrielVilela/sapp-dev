@@ -61,6 +61,10 @@ function Painel() {
     add("Jurídico · Julgados, aguardando homologação", (p) => p.situacao === "julgado");
     add("Jurídico · Homologados, aguardando o Presidente", (p) => p.situacao === "homologado");
     add("Jurídico · A gerar a GRU (assinados pelo Presidente)", (p) => p.situacao === "assinado_presidente");
+    add("Jurídico · GRU registrada, a classificar (pago / recurso / não pago)", (p) => p.situacao === "gru_gerada");
+    add("Jurídico · Em recurso (instância superior do Inmetro)", (p) => p.situacao === "em_recurso");
+    add("Jurídico · Não pagos — dívida ativa para recobrança", (p) => p.situacao === "nao_pago");
+    add("Jurídico · Pagos", (p) => p.situacao === "pago");
   }
 
   const contagem = (Object.keys(SITUACAO) as (keyof typeof SITUACAO)[]).map((s) => ({

@@ -68,5 +68,17 @@ Nas filas "Aguardando homologação" (homologador) e "Aguardando assinatura do P
 ## Prazo de defesa automático
 Vencido o prazo de defesa sem defesa registrada, o processo passa **sozinho** para `sem_defesa`, com evento "automático" atribuído ao ator **Sistema**. Não há agendador: a rotina `encerrar_prazos_vencidos()` roda sempre que o sistema lista ou abre processos (o que acontece em toda sessão de trabalho). Se uma defesa chegar depois (ex.: pelos Correios) e o processo ainda não tiver sido julgado, ela pode ser registrada e fica marcada "FORA DO PRAZO". Há também o botão **Registrar sem defesa** (processo aguardando defesa): depois do vencimento basta confirmar; **antes do vencimento** exige o motivo (ex.: renúncia expressa ao prazo), que fica no histórico (migração 0007). Regra a validar com a GEJUR.
 
-## Fase 3 (a implementar): GRU pela Gerência Jurídica
-Hoje o processo assinado aparece na fila "A gerar a GRU". Faltam os dados da guia (código de recolhimento, unidade gestora, vencimento, número de referência etc.), definição do desconto de 30% à vista e do fluxo Correios → recurso (instância superior do Inmetro; prazo indefinido) → dívida ativa.
+## Fase 3: GRU pela Gerência Jurídica
+Processo assinado pelo Presidente (decisão de multa) → Jurídico **Registrar GRU** (nº da GRU e vencimento) → `gru_gerada`. O SAPP **não emite a guia oficial**: registra os dados da guia emitida, calcula o **valor à vista com desconto** (30% por padrão; parâmetro `desconto_vista_percentual`, ajustável pelo administrador em *Parâmetros (GRU)*) e mostra o **espelho da GRU** (imprimível) com código de recolhimento, UG e instruções, também parametrizáveis. Número de GRU é único no sistema. Hoje não há edição/cancelamento de uma GRU registrada (precisa ser definido).
+
+## Fase 4A: classificação das GRUs (pago / em recurso / não pago)
+Com a GRU registrada (`gru_gerada`) o Jurídico classifica o processo (página *GRUs: pago / recurso / não pago* ou na tela do processo):
+- **Pago** → `pago` (data, valor pago, "à vista com desconto"). O valor é conferido com o esperado (multa ou valor com desconto); divergência não bloqueia, mas fica avisada no histórico.
+- **Em recurso** → `em_recurso` (data do recurso; instância superior do Inmetro). Daí o processo vai a `pago` ou `nao_pago` (este exige informar o resultado do recurso).
+- **Não pago** → `nao_pago`, **só depois do vencimento da GRU**; entra na **listagem de dívida ativa para recobrança** (*Dívida ativa*: busca, total, exportação CSV para Excel e impressão). Classificação em lote por checkboxes (cada GRU conferida individualmente).
+- Pagamento posterior de um não pago é registrável e o processo sai da listagem.
+Modo de teste (`MODO_TESTE=true`): botão "vencer a GRU (−15 dias)".
+A inscrição formal em dívida ativa acontece fora do SAPP (o CSV serve de base).
+
+## Pendente (fase 4B)
+Envio da decisão + GRU ao autuado (Correios, com AR/ciência) — hoje a classificação parte direto da GRU registrada; **prazo do recurso** (indefinido; o sistema não calcula prazo até ser definido); **resultado do recurso** (mantida/reduzida/cancelada, hoje simplificado a pago/não pago); regras do desconto à vista (até quando vale; se implica renúncia ao recurso).

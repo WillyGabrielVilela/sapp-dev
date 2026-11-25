@@ -32,6 +32,10 @@ export const SITUACAO: Record<Situacao, string> = {
   homologado: "Homologado — aguardando assinatura do Presidente",
   assinado_presidente: "Assinado — com a Ger. Jurídica para gerar a GRU",
   arquivado: "Arquivado",
+  gru_gerada: "GRU registrada — a classificar (pago, recurso ou não pago)",
+  pago: "Pago",
+  em_recurso: "Em recurso — instância superior do Inmetro",
+  nao_pago: "Não pago — em listagem de dívida ativa",
 };
 
 export const SETOR_TECNICO: Record<SetorTecnico, string> = {
@@ -61,6 +65,10 @@ export const EVENTO: Record<string, string> = {
   JULGADO: "Julgado",
   ASSINADO_PRESIDENTE: "Assinado pelo Presidente",
   HOMOLOGADO: "Homologado",
+  GRU_REGISTRADA: "GRU registrada",
+  PAGAMENTO_REGISTRADO: "Pagamento registrado",
+  RECURSO_REGISTRADO: "Recurso registrado",
+  CLASSIFICADO_NAO_PAGO: "Classificado como não pago",
 };
 
 export const CANAL: Record<CanalNotificacao, string> = {
@@ -123,6 +131,10 @@ export function sgiEsperado(situacao: Situacao): string {
     case "homologado":
     case "assinado_presidente":
     case "arquivado":
+    case "gru_gerada":
+    case "pago":
+    case "em_recurso":
+    case "nao_pago":
       return "A definir com o Inmetro (pós-julgamento)";
   }
 }

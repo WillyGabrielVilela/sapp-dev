@@ -54,6 +54,8 @@ function DetalheProcesso() {
   const eventos = det?.eventos ?? [];
   const notificacoes = det?.notificacoes ?? [];
   const julgamento = det?.julgamento ?? null;
+  const gru = det?.gru ?? null;
+  const recurso = det?.recurso ?? null;
   const { data: fiscais = [] } = useQuery({ queryKey: ["fiscais"], queryFn: () => listarFiscaisFn() });
 
   const acao = useMutation({
@@ -122,6 +124,14 @@ function DetalheProcesso() {
                     ["Assinatura do Presidente", julgamento.assinado_em ? `${perfis?.get(julgamento.assinado_por ?? "") ?? "—"} · ${dataBR(julgamento.assinado_em, true)}` : "Pendente"],
                   ]
                 : []),
+              ...(gru
+                ? [
+                    ["GRU", `${gru.numero_gru} · vence em ${dataBR(gru.vencimento)}`],
+                    ["Valor da GRU", `${brl(gru.valor)} · à vista (${gru.desconto_percentual}% de desconto): ${brl(gru.valor_com_desconto)}`],
+                  ]
+                : []),
+              ...(gru?.pago_em ? [["Pagamento", `${dataBR(gru.pago_em)} · ${brl(gru.valor_pago)}${gru.pago_com_desconto ? " (à vista, com desconto)" : ""}`]] : []),
+              ...(recurso ? [["Recurso", `protocolado em ${dataBR(recurso.data_recurso)} · instância superior do Inmetro`]] : []),
               ["No SGI deve constar em (conferir)", sgiEsperado(p.situacao)],
             ].map(([k, v]) => (
               <div key={k} className="bg-card p-4">
@@ -173,7 +183,7 @@ function DetalheProcesso() {
                   Devolver ao {cpmaAtivo ? "CCA" : "CPMA"}
                 </Button>
               )}
-              {juridicoNoSetor && <AcoesJuridico p={p} notificacoes={notificacoes} />}
+              {juridicoNoSetor && <AcoesJuridico p={p} notificacoes={notificacoes} julgamento={julgamento} gru={gru} />}
               {p.setor_atual === "JURIDICO" && comSetor && <AcoesJulgamento p={p} julgamento={julgamento} papeis={sessao.papeis} />}
               {ccaAtivo && <Button onClick={() => setDialogo("corrigir")}>Corrigir e reencaminhar ao CPMA</Button>}
               {doSetorAtual && (
@@ -276,7 +286,11 @@ function proxima(p: { situacao: string; digitalizado_em: string | null; fiscal_i
     case "julgamento_devolvido": return "Devolvido ao julgamento: o advogado da espécie deve rejulgar.";
     case "julgado": return "Julgado. Aguardando a homologação.";
     case "homologado": return "Homologado. Aguardando a assinatura do Presidente.";
-    case "assinado_presidente": return "Assinado pelo Presidente. Volta à Gerência Jurídica para gerar a GRU (fase 3, ainda não implementada).";
+    case "assinado_presidente": return "Assinado pelo Presidente. Gerência Jurídica: emita a GRU e registre os dados dela.";
+    case "gru_gerada": return "GRU registrada. Classifique: registrar o pagamento, registrar recurso ou, vencida a GRU sem pagamento, marcar como não pago.";
+    case "em_recurso": return "Recurso em análise na instância superior do Inmetro. Registre o pagamento ou, se o recurso não livrar da multa e não houver pagamento, marque como não pago.";
+    case "nao_pago": return "Não pago: processo na listagem de dívida ativa para recobrança. Se houver pagamento posterior, registre-o.";
+    case "pago": return "Pago. Processo concluído.";
     case "arquivado": return "Arquivado: decisão de arquivamento assinada pelo Presidente. Não há GRU.";
     case "aguardando_cca": return "O CCA deve confirmar o recebimento da devolução.";
     case "em_correcao_cca": return "CCA: corrigir o cadastro e reencaminhar ao CPMA.";

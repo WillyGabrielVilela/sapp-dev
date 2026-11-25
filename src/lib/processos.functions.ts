@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { exigirSessao } from "@/lib/auth-middleware";
-import type { Evento, Julgamento, Notificacao, Processo } from "@/lib/tipos";
+import type { Evento, Gru, Julgamento, Notificacao, Processo, Recurso } from "@/lib/tipos";
 
 export const listarProcessosFn = createServerFn({ method: "GET" })
   .middleware([exigirSessao])
@@ -18,7 +18,7 @@ export const listarProcessosFn = createServerFn({ method: "GET" })
 export const obterProcessoFn = createServerFn({ method: "GET" })
   .middleware([exigirSessao])
   .inputValidator(z.object({ id: z.string().uuid() }))
-  .handler(async ({ context, data }): Promise<{ processo: Processo; eventos: Evento[]; notificacoes: Notificacao[]; julgamento: Julgamento | null } | null> => {
+  .handler(async ({ context, data }): Promise<{ processo: Processo; eventos: Evento[]; notificacoes: Notificacao[]; julgamento: Julgamento | null; gru: Gru | null; recurso: Recurso | null } | null> => {
     const { comUsuario } = await import("@/server/db.server");
     const { exigirPapel, PAPEIS_SETORES } = await import("@/server/guarda.server");
     exigirPapel(context.sessao, ...PAPEIS_SETORES);
@@ -31,7 +31,9 @@ export const obterProcessoFn = createServerFn({ method: "GET" })
       const eventos = (await c.query<Evento>("select * from eventos where processo_id = $1 order by criado_em, id", [p.id])).rows;
       const notificacoes = (await c.query<Notificacao>("select * from notificacoes where processo_id = $1 order by criada_em", [p.id])).rows;
       const julgamento = (await c.query<Julgamento>("select * from julgamentos where processo_id = $1", [p.id])).rows[0] ?? null;
-      return { processo: p, eventos, notificacoes, julgamento };
+      const gru = (await c.query<Gru>("select * from grus where processo_id = $1", [p.id])).rows[0] ?? null;
+      const recurso = (await c.query<Recurso>("select * from recursos where processo_id = $1", [p.id])).rows[0] ?? null;
+      return { processo: p, eventos, notificacoes, julgamento, gru, recurso };
     });
   });
 

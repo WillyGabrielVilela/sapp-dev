@@ -48,13 +48,16 @@ function Juridico() {
     { titulo: "Entregas a registrar (notificação enviada)", itens: por("notificacao_enviada"), botao: () => "Registrar entrega" },
     { titulo: "Prazo de defesa correndo (segue sozinho se vencer sem defesa)", itens: por("aguardando_defesa"), botao: () => "Abrir processo" },
     { titulo: "Com defesa ou sem defesa · aguardando julgamento dos advogados", itens: por("com_defesa", "sem_defesa", "julgamento_devolvido", "julgado", "homologado"), botao: () => "Abrir processo" },
-    { titulo: "A gerar a GRU (assinados pelo Presidente) · fase 3", itens: por("assinado_presidente"), botao: () => "Abrir processo" },
+    { titulo: "A gerar a GRU (assinados pelo Presidente)", itens: por("assinado_presidente"), botao: () => "Registrar GRU" },
+    { titulo: "GRU registrada · a classificar (pago, recurso ou não pago)", itens: por("gru_gerada"), botao: () => "Classificar" },
+    { titulo: "Em recurso · instância superior do Inmetro", itens: por("em_recurso"), botao: () => "Abrir processo" },
+    { titulo: "Não pagos · dívida ativa para recobrança", itens: por("nao_pago"), botao: () => "Abrir processo" },
   ];
   const termo = busca.trim().toLocaleLowerCase("pt-BR");
   const casa = (p: Processo) => !termo || p.numero.includes(termo) || (p.numero_ai ?? "").includes(termo) || (p.proprietario ?? "").toLocaleLowerCase("pt-BR").includes(termo);
 
   return <>
-    <Cabecalho titulo="Jurídico" sub="Protocolo → notificação → ciência → prazo de defesa (a GRU, os Correios, o recurso e a cobrança virão nas próximas etapas)" />
+    <Cabecalho titulo="Jurídico" sub="Protocolo → notificação → ciência → prazo de defesa (a classificação das GRUs tem página própria: GRUs pago / recurso / não pago)" />
     <Input className="mb-6 max-w-xl" aria-label="Buscar processo no Jurídico" placeholder="Buscar por nº do processo, nº do AI ou nome do autuado" value={busca} onChange={(e) => setBusca(e.target.value)} />
     {error ? <p role="alert" className="text-destructive">Não foi possível carregar os processos.</p> : isLoading ? <p className="text-muted-foreground">Carregando processos…</p> :
       <div className="space-y-8">

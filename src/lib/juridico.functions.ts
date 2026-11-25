@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { exigirSessao } from "@/lib/auth-middleware";
-import type { ItemLista, ListaSaida, ListaSaidaResumo } from "@/lib/tipos";
+import type { Gru, ItemLista, ListaSaida, ListaSaidaResumo, Parametro, Processo } from "@/lib/tipos";
 
 const ID = z.string().uuid();
 const DATA = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -146,5 +146,62 @@ export const anteciparPrazoFn = createServerFn({ method: "POST" })
     const { anteciparPrazo } = await import("@/server/teste.server");
     exigirPapel(context.sessao, "juridico");
     await anteciparPrazo(context.sessao.id, data.processoId, 15);
+    return { ok: true as const };
+  });
+
+// ---------- fase 3: GRU ----------
+export const registrarGruFn = createServerFn({ method: "POST" })
+  .middleware([exigirSessao])
+  .inputValidator(z.object({ processoId: ID, numeroGru: z.string().max(60), vencimento: DATA, obs: z.string().max(2000) }))
+  .handler(async ({ context, data }) => {
+    const { comUsuario } = await import("@/server/db.server");
+    await comUsuario(context.sessao.id, (c) =>
+      c.query("select registrar_gru($1, $2, $3::date, $4)", [data.processoId, data.numeroGru, data.vencimento, data.obs]),
+    );
+    return { ok: true as const };
+  });
+
+export const obterEspelhoGruFn = createServerFn({ method: "GET" })
+  .middleware([exigirSessao])
+  .inputValidator(z.object({ processoId: ID }))
+  .handler(async ({ context, data }): Promise<{ processo: Processo; gru: Gru; parametros: Parametro[] } | null> => {
+    const { comUsuario } = await import("@/server/db.server");
+    const { exigirPapel } = await import("@/server/guarda.server");
+    exigirPapel(context.sessao, "juridico", "gestao");
+    return comUsuario(context.sessao.id, async (c) => {
+      const processo = (await c.query<Processo>("select * from processos where id = $1", [data.processoId])).rows[0];
+      const gru = (await c.query<Gru>("select * from grus where processo_id = $1", [data.processoId])).rows[0];
+      if (!processo || !gru) return null;
+      const parametros = (await c.query<Parametro>("select chave, valor from parametros")).rows;
+      return { processo, gru, parametros };
+    });
+  });
+
+export const listarParametrosFn = createServerFn({ method: "GET" })
+  .middleware([exigirSessao])
+  .handler(async ({ context }): Promise<Parametro[]> => {
+    const { comUsuario } = await import("@/server/db.server");
+    const { exigirPapel } = await import("@/server/guarda.server");
+    exigirPapel(context.sessao, "admin");
+    return comUsuario(context.sessao.id, async (c) => (await c.query<Parametro>("select chave, valor from parametros order by chave")).rows);
+  });
+
+export const definirParametroFn = createServerFn({ method: "POST" })
+  .middleware([exigirSessao])
+  .inputValidator(z.object({ chave: z.string().max(60), valor: z.string().max(1000) }))
+  .handler(async ({ context, data }) => {
+    const { comUsuario } = await import("@/server/db.server");
+    await comUsuario(context.sessao.id, (c) => c.query("select definir_parametro($1, $2)", [data.chave, data.valor]));
+    return { ok: true as const };
+  });
+
+export const anteciparGruFn = createServerFn({ method: "POST" })
+  .middleware([exigirSessao])
+  .inputValidator(z.object({ processoId: ID }))
+  .handler(async ({ context, data }) => {
+    const { exigirPapel } = await import("@/server/guarda.server");
+    const { anteciparGru } = await import("@/server/teste.server");
+    exigirPapel(context.sessao, "juridico");
+    await anteciparGru(context.sessao.id, data.processoId, 15);
     return { ok: true as const };
   });

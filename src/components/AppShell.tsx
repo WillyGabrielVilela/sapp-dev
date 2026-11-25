@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { FileUp, Inbox, LayoutList, LogOut, Scale, Tags, UserCog, Users } from "lucide-react";
+import { Banknote, FileUp, FileWarning, Inbox, LayoutList, LogOut, Receipt, Scale, Tags, UserCog, Users } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { sairFn } from "@/lib/auth.functions";
 import { useSessao } from "@/lib/auth";
@@ -11,10 +11,13 @@ const NAV: { to: string; rotulo: string; icon: typeof LayoutList; papeis: Papel[
   { to: "/cpma", rotulo: "CPMA · Recebimento", icon: Inbox, papeis: ["cpma"] },
   { to: "/juridico", rotulo: "Jurídico · Recebimento", icon: Scale, papeis: ["juridico"] },
   { to: "/julgamento", rotulo: "Julgamento e assinatura", icon: Scale, papeis: ["advogado", "presidente", "homologador"] },
+  { to: "/classificacao-gru", rotulo: "GRUs: pago / recurso / não pago", icon: Banknote, papeis: ["juridico", "gestao"] },
+  { to: "/divida-ativa", rotulo: "Dívida ativa", icon: FileWarning, papeis: ["juridico", "gestao"] },
   { to: "/importacao", rotulo: "Importação JR5260", icon: FileUp, papeis: ["cca"] },
   { to: "/fiscais", rotulo: "Fiscais", icon: Users, papeis: ["cpma", "admin"] },
   { to: "/especies", rotulo: "Espécies", icon: Tags, papeis: ["admin", "cpma", "cca"] },
   { to: "/usuarios", rotulo: "Usuários e perfis", icon: UserCog, papeis: ["admin"] },
+  { to: "/parametros", rotulo: "Parâmetros (GRU)", icon: Receipt, papeis: ["admin"] },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {

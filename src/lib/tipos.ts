@@ -23,7 +23,11 @@ export type Situacao =
   | "julgado"
   | "assinado_presidente"
   | "homologado"
-  | "arquivado";
+  | "arquivado"
+  | "gru_gerada"
+  | "pago"
+  | "em_recurso"
+  | "nao_pago";
 
 export type TipoEvento =
   | "IMPORTADO"
@@ -43,7 +47,11 @@ export type TipoEvento =
   | "PRAZO_ENCERRADO"
   | "JULGADO"
   | "ASSINADO_PRESIDENTE"
-  | "HOMOLOGADO";
+  | "HOMOLOGADO"
+  | "GRU_REGISTRADA"
+  | "PAGAMENTO_REGISTRADO"
+  | "RECURSO_REGISTRADO"
+  | "CLASSIFICADO_NAO_PAGO";
 
 export type CanalNotificacao = "correios" | "whatsapp" | "doe" | "em_maos";
 export type ResultadoNotificacao = "pendente" | "entregue" | "devolvido" | "recusado" | "mudou_se";
@@ -187,3 +195,37 @@ export type Julgamento = {
 export type JulgadorEspecies = { id: string; nome: string; email: string; especies: string[] }; // especies vazio = julga todas (padrão)
 
 export type ResultadoLote = { feitos: number; falhas: { numero: string; motivo: string }[] };
+
+export type Gru = {
+  processo_id: string;
+  numero_gru: string;
+  valor: string; // numeric chega como texto
+  desconto_percentual: number;
+  valor_com_desconto: string;
+  vencimento: string;
+  emitida_em: string;
+  emitida_por: string;
+  pago_em: string | null;
+  valor_pago: string | null;
+  pago_com_desconto: boolean | null;
+  pagamento_obs: string | null;
+};
+export type Recurso = { processo_id: string; data_recurso: string; observacao: string | null; registrado_em: string };
+/** Linha da classificação das GRUs: processo + dados da guia. */
+export type LinhaGru = {
+  processo_id: string;
+  numero: string;
+  numero_ai: string | null;
+  proprietario: string | null;
+  documento_autuado: string | null;
+  situacao: Situacao;
+  numero_gru: string;
+  valor: string;
+  valor_com_desconto: string;
+  vencimento: string;
+  pago_em: string | null;
+  valor_pago: string | null;
+  recurso_em: string | null;
+  atualizado_em: string;
+};
+export type Parametro = { chave: string; valor: string };

@@ -301,6 +301,97 @@ describe.skipIf(!habilitado)("fluxo CCA → CPMA → Jurídico (PostgreSQL real)
     expect(fim.map((x) => x.situacao)).toEqual(["assinado_presidente", "assinado_presidente", "julgado"]);
   });
 
+  it("fase 3: Ger. Jurídica registra a GRU (valor, desconto à vista, número único)", async () => {
+    const [, p2] = ids as [string, string];
+    const [st] = await sql<{ situacao: string }>(u["jur"], "select situacao from processos where id = $1", [p2]);
+    expect(st!.situacao).toBe("assinado_presidente");
+    const R = "select registrar_gru($1, $2, hoje() + 30, 'emitida no portal')";
+    await falha(u["cpma"], R, [p2, "GRU-0001"], /Permissão negada/);
+    await falha(u["adv"], R, [p2, "GRU-0001"], /Permissão negada/); // advogado (sem perfil Jurídico) não gera GRU
+    await falha(u["jur"], R, [p2, "ab"], /número da GRU/);
+    await falha(u["jur"], "select registrar_gru($1, 'GRU-0001', hoje() - 1)", [p2], /anterior a hoje/);
+    await falha(u["jur"], R, [ids[0]!, "GRU-0001"], /não está aguardando a GRU/); // arquivado não tem GRU
+    await falha(u["adv"], "select definir_parametro('desconto_vista_percentual','20')", [], /Permissão negada/);
+    await falha(u["admin"], "select definir_parametro('desconto_vista_percentual','99')", [], /0 a 90/);
+    await falha(u["admin"], "select definir_parametro('qualquer_coisa','1')", [], /desconhecido/);
+    await sql(u["jur"], R, [p2, "GRU-0001"]);
+    const [g] = await sql<{ valor: string; valor_com_desconto: string; desconto_percentual: number }>(u["jur"], "select valor::text, valor_com_desconto::text, desconto_percentual from grus where processo_id = $1", [p2]);
+    expect(g).toEqual({ valor: "900.00", valor_com_desconto: "630.00", desconto_percentual: 30 }); // 30% de 900
+    const [fim] = await sql<{ situacao: string }>(u["jur"], "select situacao from processos where id = $1", [p2]);
+    expect(fim!.situacao).toBe("gru_gerada");
+    await falha(u["jur"], R, [p2, "GRU-0002"], /não está aguardando a GRU/);
+    // número repetido em outro processo; desconto parametrizado
+    const [outro] = await sql<{ id: string }>(null, "select id from processos where situacao = 'assinado_presidente' limit 1");
+    await falha(u["jur"], R, [outro!.id, "gru-0001"], /já está registrado/);
+    await sql(u["admin"], "select definir_parametro('desconto_vista_percentual','20')");
+    await sql(u["jur"], R, [outro!.id, "GRU-0002"]);
+    const [g2] = await sql<{ valor_com_desconto: string }>(u["jur"], "select valor_com_desconto::text from grus where processo_id = $1", [outro!.id]);
+    expect(g2!.valor_com_desconto).toBe("40.00"); // 20% de desconto sobre 50,00
+    const ev = await sql<{ observacao: string }>(u["jur"], "select observacao from eventos where processo_id = $1 and tipo = 'GRU_REGISTRADA'", [p2]);
+    expect(ev[0]!.observacao).toMatch(/GRU-0001.*R\$ 900,00.*30%.*R\$ 630,00/);
+  });
+
+  it("fase 4A: GRU classificada como pago, em recurso ou não pago (dívida ativa)", async () => {
+    const [, p2] = ids as [string, string];
+    const gruDe = async (pid: string) => (await sql<{ situacao: string }>(null, "select situacao from processos where id = $1", [pid]))[0]!.situacao;
+    const [b] = await sql<{ id: string }>(null, "select id from processos where numero = $1", [num(901)]); // assinado, ainda sem GRU
+    const [c] = await sql<{ id: string }>(null, "select id from processos where situacao = 'gru_gerada' and id <> $1 limit 1", [p2]); // GRU-0002 (R$ 50, desconto 20%)
+    await sql(u["jur"], "select registrar_gru($1, 'GRU-0003', hoje() + 20)", [b!.id]);
+
+    // permissões e estados inválidos
+    await falha(u["cpma"], "select registrar_pagamento_gru($1, hoje(), 100, false)", [p2], /Permissão negada/);
+    await falha(u["adv"], "select classificar_nao_pago($1)", [p2], /Permissão negada/);
+    await falha(u["jur"], "select registrar_pagamento_gru($1, hoje() + 1, 100, false)", [p2], /futura/);
+    await falha(u["jur"], "select registrar_pagamento_gru($1, hoje(), 0, false)", [p2], /valor pago/);
+    await falha(u["jur"], "select registrar_recurso($1, hoje() + 1)", [b!.id], /futura/);
+
+    // NÃO PAGO só depois do vencimento
+    await falha(u["jur"], "select classificar_nao_pago($1)", [c!.id], /vence em/);
+    await pool().query("update grus set vencimento = hoje() - 5 where processo_id = $1", [c!.id]);
+    await sql(u["jur"], "select classificar_nao_pago($1, 'sem pagamento no prazo')", [c!.id]);
+    expect(await gruDe(c!.id)).toBe("nao_pago");
+    const [lista] = await sql<{ n: number }>(null, "select count(*)::int as n from processos where situacao = 'nao_pago'");
+    expect(lista!.n).toBe(1); // entrou na listagem de dívida ativa
+    await falha(u["jur"], "select classificar_nao_pago($1)", [c!.id], /não está aguardando/);
+
+    // RECURSO → depois não pago exige o resultado do recurso
+    await sql(u["jur"], "select registrar_recurso($1, hoje(), 'protocolado na instância superior')", [b!.id]);
+    expect(await gruDe(b!.id)).toBe("em_recurso");
+    await falha(u["jur"], "select registrar_recurso($1, hoje())", [b!.id], /aguardando classificação/);
+    await falha(u["jur"], "select classificar_nao_pago($1)", [b!.id], /resultado do recurso/);
+
+    // PAGO: valor esperado confere; valor diferente é avisado no histórico; pagamento posterior tira da dívida ativa
+    await sql(u["jur"], "select registrar_pagamento_gru($1, hoje(), 630, true, 'à vista')", [p2]);
+    expect(await gruDe(p2)).toBe("pago");
+    const [e1] = await sql<{ observacao: string }>(null, "select observacao from eventos where processo_id = $1 and tipo = 'PAGAMENTO_REGISTRADO'", [p2]);
+    expect(e1!.observacao).toMatch(/630,00.*à vista/);
+    expect(e1!.observacao).not.toMatch(/ATENÇÃO/);
+    await falha(u["jur"], "select registrar_pagamento_gru($1, hoje(), 630, true)", [p2], /etapa de pagamento/); // já pago
+    await sql(u["jur"], "select registrar_pagamento_gru($1, hoje(), 33.33, false)", [c!.id]); // pago depois de ir para a dívida ativa, valor divergente
+    const [e2] = await sql<{ observacao: string }>(null, "select observacao from eventos where processo_id = $1 and tipo = 'PAGAMENTO_REGISTRADO'", [c!.id]);
+    expect(e2!.observacao).toMatch(/ATENÇÃO.*R\$ 50,00/);
+    const [lista2] = await sql<{ n: number }>(null, "select count(*)::int as n from processos where situacao = 'nao_pago'");
+    expect(lista2!.n).toBe(0);
+
+    // recurso encerrado sem pagamento → não pago (com resultado informado)
+    await sql(u["jur"], "select classificar_nao_pago($1, 'Recurso indeferido; sem pagamento')", [b!.id]);
+    expect(await gruDe(b!.id)).toBe("nao_pago");
+  });
+
+  it("lote: classificar como não pago só as GRUs vencidas", async () => {
+    const { executarLote } = await import("./lote.server");
+    const novo: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      const [r] = await sql<{ id: string }>(null, "insert into processos (numero, especie, setor_atual, situacao) values ($1,'CT','JURIDICO','gru_gerada') returning id", [num(950 + i)]);
+      await pool().query("insert into grus (processo_id, numero_gru, valor, desconto_percentual, valor_com_desconto, vencimento, emitida_por) values ($1,$2,100,30,70,$3,$4)", [r!.id, `LOTE-${i}`, i === 2 ? "2099-01-01" : "2020-01-01", u["jur"]]);
+      novo.push(r!.id);
+    }
+    const r = await executarLote(u["jur"], novo, "classificar_nao_pago", "");
+    expect(r.feitos).toBe(2);
+    expect(r.falhas).toHaveLength(1);
+    expect(r.falhas[0]!.motivo).toMatch(/vence em/);
+  });
+
   it("histórico é imutável e inclui toda a trilha", async () => {
     await expect(pool().query("update eventos set observacao = 'x'")).rejects.toThrow(/não podem ser editados/);
     await expect(pool().query("delete from eventos")).rejects.toThrow(/não podem ser editados/);
