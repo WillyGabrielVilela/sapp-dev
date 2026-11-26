@@ -9,6 +9,7 @@ export async function executarLote(
   ids: string[],
   fn: "homologar_processo" | "assinar_presidente" | "classificar_nao_pago",
   obs: string,
+  data?: string,
 ): Promise<ResultadoLote> {
   const unicos = [...new Set(ids)];
   return comUsuario(usuarioId, async (c) => {
@@ -17,7 +18,8 @@ export async function executarLote(
     for (const [i, id] of unicos.entries()) {
       await c.query(`savepoint lote_${i}`);
       try {
-        await c.query(`select ${fn}($1, $2)`, [id, obs]);
+        if (fn === "assinar_presidente") await c.query("select assinar_presidente($1, $2, $3::date)", [id, obs, data ?? null]);
+        else await c.query(`select ${fn}($1, $2)`, [id, obs]);
         await c.query(`release savepoint lote_${i}`);
         feitos++;
       } catch (e) {

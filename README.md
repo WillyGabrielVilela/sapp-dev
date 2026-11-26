@@ -44,7 +44,7 @@ Senhas com scrypt, sessão opaca em cookie HttpOnly (só o hash fica no banco), 
   `DATABASE_URL=… npm run db:migrar && DATABASE_URL_TESTE=postgres://…/sapp_test npm test`
 
 ## Jurídico
-Veja `docs/juridico-fase1.md`.
+Áreas, perfis e regras: `docs/juridico-fase1.md`. Perfis: `cca`, `cpma`, `juridico` (administrativo), `advogado`, `homologador`, `gestao`, `admin`.
 
 ## Modo de teste
 Com `MODO_TESTE=true`, o Jurídico vê em processos "aguardando defesa" o botão **Teste: vencer o prazo (−15 dias)**, que recua as datas para permitir testar "encerrar sem defesa" sem esperar. O ajuste fica no histórico com o prefixo `TESTE:`. **Não ligue em produção.**

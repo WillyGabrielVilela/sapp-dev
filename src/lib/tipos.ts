@@ -189,6 +189,7 @@ export type Julgamento = {
   julgado_em: string;
   assinado_por: string | null;
   assinado_em: string | null;
+  assinatura_data: string | null; // data em que o Presidente assinou (informada pelo homologador)
   homologado_por: string | null;
   homologado_em: string | null;
 };

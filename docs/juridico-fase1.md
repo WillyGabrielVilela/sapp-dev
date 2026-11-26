@@ -68,8 +68,8 @@ Nas filas "Aguardando homologação" (homologador) e "Aguardando assinatura do P
 ## Prazo de defesa automático
 Vencido o prazo de defesa sem defesa registrada, o processo passa **sozinho** para `sem_defesa`, com evento "automático" atribuído ao ator **Sistema**. Não há agendador: a rotina `encerrar_prazos_vencidos()` roda sempre que o sistema lista ou abre processos (o que acontece em toda sessão de trabalho). Se uma defesa chegar depois (ex.: pelos Correios) e o processo ainda não tiver sido julgado, ela pode ser registrada e fica marcada "FORA DO PRAZO". Há também o botão **Registrar sem defesa** (processo aguardando defesa): depois do vencimento basta confirmar; **antes do vencimento** exige o motivo (ex.: renúncia expressa ao prazo), que fica no histórico (migração 0007). Regra a validar com a GEJUR.
 
-## Fase 3: GRU pela Gerência Jurídica
-Processo assinado pelo Presidente (decisão de multa) → Jurídico **Registrar GRU** (nº da GRU e vencimento) → `gru_gerada`. O SAPP **não emite a guia oficial**: registra os dados da guia emitida, calcula o **valor à vista com desconto** (30% por padrão; parâmetro `desconto_vista_percentual`, ajustável pelo administrador em *Parâmetros (GRU)*) e mostra o **espelho da GRU** (imprimível) com código de recolhimento, UG e instruções, também parametrizáveis. Número de GRU é único no sistema. Hoje não há edição/cancelamento de uma GRU registrada (precisa ser definido).
+## Fase 3: GRU
+Processo com assinatura do Presidente registrada (decisão de multa) → o **advogado** **registra a GRU** (nº da GRU e vencimento) → `gru_gerada`. O SAPP **não emite a guia oficial**: registra os dados da guia emitida, calcula o **valor à vista com desconto** (30% por padrão; parâmetro `desconto_vista_percentual`, ajustável pelo administrador em *Parâmetros (GRU)*) e mostra o **espelho da GRU** (imprimível) com código de recolhimento, UG e instruções, também parametrizáveis. Número de GRU é único no sistema. Hoje não há edição/cancelamento de uma GRU registrada (precisa ser definido).
 
 ## Fase 4A: classificação das GRUs (pago / em recurso / não pago)
 Com a GRU registrada (`gru_gerada`) o Jurídico classifica o processo (página *GRUs: pago / recurso / não pago* ou na tela do processo):
@@ -82,3 +82,21 @@ A inscrição formal em dívida ativa acontece fora do SAPP (o CSV serve de base
 
 ## Pendente (fase 4B)
 Envio da decisão + GRU ao autuado (Correios, com AR/ciência) — hoje a classificação parte direto da GRU registrada; **prazo do recurso** (indefinido; o sistema não calcula prazo até ser definido); **resultado do recurso** (mantida/reduzida/cancelada, hoje simplificado a pago/não pago); regras do desconto à vista (até quando vale; se implica renúncia ao recurso).
+
+---
+
+# Áreas e perfis do Jurídico (migração 0010)
+
+O menu é agrupado por área; cada perfil só vê a sua.
+
+| Área | Perfil | O que faz |
+|---|---|---|
+| Jurídico administrativo (`/juridico`) | `juridico` | Receber, protocolar, listas de saída, desfecho da entrega, prazo de defesa / sem defesa. Tudo **antes** do julgamento |
+| Jurídico — advogados (`/advogados`, GRUs, dívida ativa) | `advogado` | Julgar (decisão + multa), **registrar a GRU**, classificar (pago / em recurso / não pago), dívida ativa |
+| Homologação (`/homologacao`) | `homologador` | Homologar; **registrar a assinatura do Presidente** (informe com data); definir quem julga cada espécie |
+
+**O Presidente não usa o sistema.** Ele assina em papel e os homologadores registram a data da assinatura (individualmente ou em lote). O perfil `presidente` ficou em desuso (o valor continua no banco; contas antigas só aparecem rotuladas "em desuso").
+Atenção ao atualizar: quem hoje faz GRU/classificação com o perfil `juridico` precisa receber o perfil `advogado`. Observações em processo no Jurídico: `juridico`, `advogado` e `homologador`.
+
+## Exportação CSV
+Botão **CSV** em cada fila/tabela (painel, CPMA, Jurídico administrativo, advogados, homologação, classificação das GRUs, dívida ativa e cada lista de saída). Exporta as linhas exibidas (respeita a busca), com ";" , BOM e vírgula decimal (abre direto no Excel). Textos que começam com `= + - @` são neutralizados contra injeção de fórmulas.

@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { classificarNaoPagoFn, registrarPagamentoFn, registrarRecursoFn } from "@/lib/classificacao.functions";
+import { registrarGruFn } from "@/lib/juridico.functions";
+import type { Julgamento, Processo } from "@/lib/tipos";
 import { erroMsg } from "@/lib/rotulos";
 import { brl } from "./AcoesJulgamento";
 import { hojeISO } from "./ResultadoDialog";
@@ -107,6 +109,39 @@ export function NaoPagoDialog({ alvo, obrigatoria, fechar }: { alvo: AlvoGru; ob
         <DialogFooter>
           <Button variant="outline" disabled={salvar.isPending} onClick={fechar}>Cancelar</Button>
           <Button disabled={salvar.isPending || (obrigatoria && obs.trim().length < 5)} onClick={() => salvar.mutate()}>Classificar como não pago</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function GruDialog({ p, julgamento, fechar }: { p: Processo; julgamento: Julgamento | null; fechar: () => void }) {
+  const feito = useFeito(fechar);
+  const [numero, setNumero] = useState("");
+  const [venc, setVenc] = useState("");
+  const [obs, setObs] = useState("");
+  const salvar = useMutation({
+    mutationFn: () => registrarGruFn({ data: { processoId: p.id, numeroGru: numero, vencimento: venc, obs } }),
+    onSuccess: () => feito("GRU registrada"),
+    onError: (e) => toast.error(erroMsg(e)),
+  });
+  return (
+    <Dialog open onOpenChange={(o) => !o && !salvar.isPending && fechar()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Registrar GRU</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          <span className="num-processo">{p.numero}</span> · {p.proprietario ?? "—"} · multa de <strong>{brl(julgamento?.valor_multa ?? null)}</strong>
+        </p>
+        <p className="text-xs text-muted-foreground">Emita a guia oficial e registre aqui os dados dela. O valor com desconto à vista é calculado pelo sistema e consta no espelho da GRU.</p>
+        <Label htmlFor="gru-num">Número da GRU</Label>
+        <Input id="gru-num" value={numero} onChange={(e) => setNumero(e.target.value)} />
+        <Label htmlFor="gru-venc">Vencimento</Label>
+        <Input id="gru-venc" type="date" min={hojeISO()} value={venc} onChange={(e) => setVenc(e.target.value)} />
+        <Label htmlFor="gru-obs">Observação (opcional)</Label>
+        <Textarea id="gru-obs" rows={2} value={obs} onChange={(e) => setObs(e.target.value)} />
+        <DialogFooter>
+          <Button variant="outline" disabled={salvar.isPending} onClick={fechar}>Cancelar</Button>
+          <Button disabled={salvar.isPending || numero.trim().length < 3 || !venc} onClick={() => salvar.mutate()}>Registrar GRU</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

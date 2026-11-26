@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Download, Printer } from "lucide-react";
 import { useSessao } from "@/lib/auth";
 import { listarClassificacaoGruFn } from "@/lib/classificacao.functions";
+import { baixarCsv, gerarCsv } from "@/lib/csv";
+import { COLUNAS_GRU } from "@/lib/csv-colunas";
 import { formatarDocumento } from "@/lib/documento";
 import { dataBR } from "@/lib/rotulos";
 import type { LinhaGru } from "@/lib/tipos";
@@ -20,24 +22,11 @@ export const Route = createFileRoute("/_authenticated/divida-ativa")({
 });
 
 const atraso = (v: string) => Math.floor((Date.parse(hojeISO()) - Date.parse(v)) / 86400000);
-const csvCelula = (v: string) => `"${v.replace(/"/g, '""')}"`;
-
-function exportarCsv(linhas: LinhaGru[]) {
-  const cab = ["Processo", "AI", "Autuado", "CPF/CNPJ", "GRU", "Vencimento", "Valor (R$)", "Dias em atraso"];
-  const corpo = linhas.map((l) => [l.numero, l.numero_ai ?? "", l.proprietario ?? "", formatarDocumento(l.documento_autuado).replace("—", ""), l.numero_gru, dataBR(l.vencimento), Number(l.valor).toFixed(2).replace(".", ","), String(atraso(l.vencimento))]);
-  // ponto e vírgula + BOM: abre direto no Excel em português
-  const csv = "\uFEFF" + [cab, ...corpo].map((r) => r.map(csvCelula).join(";")).join("\r\n");
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `divida-ativa-${hojeISO()}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+const exportarCsv = (linhas: LinhaGru[]) => baixarCsv("divida-ativa", gerarCsv([...COLUNAS_GRU.slice(0, 7), { titulo: "Dias em atraso", valor: (l: LinhaGru) => atraso(l.vencimento) }], linhas));
 
 function DividaAtiva() {
   const { data: sessao } = useSessao();
-  const habilitado = sessao?.tem("juridico", "gestao") ?? false;
+  const habilitado = sessao?.tem("advogado", "gestao") ?? false;
   const { data: todas = [], isLoading } = useQuery({ queryKey: ["classificacao-gru"], enabled: habilitado, queryFn: () => listarClassificacaoGruFn() });
   const [busca, setBusca] = useState("");
   const [pagar, setPagar] = useState<LinhaGru | null>(null);
@@ -67,7 +56,7 @@ function DividaAtiva() {
                 <td className="whitespace-nowrap p-3">{formatarDocumento(l.documento_autuado)}</td><td className="p-3">{l.numero_gru}</td>
                 <td className="whitespace-nowrap p-3">{dataBR(l.vencimento)}</td><td className="whitespace-nowrap p-3">{atraso(l.vencimento)} d</td>
                 <td className="whitespace-nowrap p-3">{brl(l.valor)}</td>
-                <td className="p-3 print:hidden">{sessao.tem("juridico") && <Button size="sm" variant="outline" onClick={() => setPagar(l)}>Registrar pagamento</Button>}</td>
+                <td className="p-3 print:hidden">{sessao.tem("advogado") && <Button size="sm" variant="outline" onClick={() => setPagar(l)}>Registrar pagamento</Button>}</td>
               </tr>))}
             </tbody>
           </table>

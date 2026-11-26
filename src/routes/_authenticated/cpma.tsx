@@ -1,3 +1,5 @@
+import { BotaoCsv } from "@/components/BotaoCsv";
+import { COLUNAS_PROCESSO } from "@/lib/csv-colunas";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -45,7 +47,7 @@ function Cpma() {
       <div className="space-y-8">{filas.map(({ titulo, itens }) => {
         const visiveis = itens.filter((p) => p.numero.includes(busca.trim()));
         return <section key={titulo}>
-          <h2 className="mb-3 font-semibold">{titulo} ({visiveis.length})</h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">{titulo} ({visiveis.length})</h2><BotaoCsv nome={titulo.split(" ·")[0]!.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-")} colunas={COLUNAS_PROCESSO} linhas={visiveis} /></div>
           {!visiveis.length ? <p className="border-t py-4 text-sm text-muted-foreground">Nenhum processo nesta fila.</p> :
             <div className="tabela-rolavel rounded-md border"><table className="w-full text-left text-sm">
               <thead className="bg-muted text-muted-foreground"><tr><th className="p-3">Processo</th><th className="p-3">Espécie</th><th className="p-3">Abertura</th><th className="p-3">Situação</th><th className="p-3">Providência</th></tr></thead>

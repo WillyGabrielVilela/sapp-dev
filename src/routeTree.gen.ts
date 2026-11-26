@@ -12,11 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAdvogadosRouteImport } from './routes/_authenticated/advogados'
 import { Route as AuthenticatedClassificacaoGruRouteImport } from './routes/_authenticated/classificacao-gru'
 import { Route as AuthenticatedCpmaRouteImport } from './routes/_authenticated/cpma'
 import { Route as AuthenticatedDividaAtivaRouteImport } from './routes/_authenticated/divida-ativa'
 import { Route as AuthenticatedEspeciesRouteImport } from './routes/_authenticated/especies'
 import { Route as AuthenticatedFiscaisRouteImport } from './routes/_authenticated/fiscais'
+import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenticated/homologacao'
 import { Route as AuthenticatedImportacaoRouteImport } from './routes/_authenticated/importacao'
 import { Route as AuthenticatedJulgamentoRouteImport } from './routes/_authenticated/julgamento'
 import { Route as AuthenticatedJuridicoRouteImport } from './routes/_authenticated/juridico'
@@ -40,6 +42,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdvogadosRoute = AuthenticatedAdvogadosRouteImport.update({
+  id: '/advogados',
+  path: '/advogados',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedClassificacaoGruRoute =
   AuthenticatedClassificacaoGruRouteImport.update({
@@ -68,6 +75,12 @@ const AuthenticatedFiscaisRoute = AuthenticatedFiscaisRouteImport.update({
   path: '/fiscais',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHomologacaoRoute =
+  AuthenticatedHomologacaoRouteImport.update({
+    id: '/homologacao',
+    path: '/homologacao',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedImportacaoRoute = AuthenticatedImportacaoRouteImport.update({
   id: '/importacao',
   path: '/importacao',
@@ -120,11 +133,13 @@ const AuthenticatedProcessosIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/advogados': typeof AuthenticatedAdvogadosRoute
   '/classificacao-gru': typeof AuthenticatedClassificacaoGruRoute
   '/cpma': typeof AuthenticatedCpmaRoute
   '/divida-ativa': typeof AuthenticatedDividaAtivaRoute
   '/especies': typeof AuthenticatedEspeciesRoute
   '/fiscais': typeof AuthenticatedFiscaisRoute
+  '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/importacao': typeof AuthenticatedImportacaoRoute
   '/julgamento': typeof AuthenticatedJulgamentoRoute
   '/juridico': typeof AuthenticatedJuridicoRoute
@@ -138,11 +153,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/advogados': typeof AuthenticatedAdvogadosRoute
   '/classificacao-gru': typeof AuthenticatedClassificacaoGruRoute
   '/cpma': typeof AuthenticatedCpmaRoute
   '/divida-ativa': typeof AuthenticatedDividaAtivaRoute
   '/especies': typeof AuthenticatedEspeciesRoute
   '/fiscais': typeof AuthenticatedFiscaisRoute
+  '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/importacao': typeof AuthenticatedImportacaoRoute
   '/julgamento': typeof AuthenticatedJulgamentoRoute
   '/juridico': typeof AuthenticatedJuridicoRoute
@@ -158,11 +175,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/advogados': typeof AuthenticatedAdvogadosRoute
   '/_authenticated/classificacao-gru': typeof AuthenticatedClassificacaoGruRoute
   '/_authenticated/cpma': typeof AuthenticatedCpmaRoute
   '/_authenticated/divida-ativa': typeof AuthenticatedDividaAtivaRoute
   '/_authenticated/especies': typeof AuthenticatedEspeciesRoute
   '/_authenticated/fiscais': typeof AuthenticatedFiscaisRoute
+  '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
   '/_authenticated/importacao': typeof AuthenticatedImportacaoRoute
   '/_authenticated/julgamento': typeof AuthenticatedJulgamentoRoute
   '/_authenticated/juridico': typeof AuthenticatedJuridicoRoute
@@ -178,11 +197,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/advogados'
     | '/classificacao-gru'
     | '/cpma'
     | '/divida-ativa'
     | '/especies'
     | '/fiscais'
+    | '/homologacao'
     | '/importacao'
     | '/julgamento'
     | '/juridico'
@@ -196,11 +217,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/advogados'
     | '/classificacao-gru'
     | '/cpma'
     | '/divida-ativa'
     | '/especies'
     | '/fiscais'
+    | '/homologacao'
     | '/importacao'
     | '/julgamento'
     | '/juridico'
@@ -215,11 +238,13 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/advogados'
     | '/_authenticated/classificacao-gru'
     | '/_authenticated/cpma'
     | '/_authenticated/divida-ativa'
     | '/_authenticated/especies'
     | '/_authenticated/fiscais'
+    | '/_authenticated/homologacao'
     | '/_authenticated/importacao'
     | '/_authenticated/julgamento'
     | '/_authenticated/juridico'
@@ -260,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/advogados': {
+      id: '/_authenticated/advogados'
+      path: '/advogados'
+      fullPath: '/advogados'
+      preLoaderRoute: typeof AuthenticatedAdvogadosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/classificacao-gru': {
       id: '/_authenticated/classificacao-gru'
       path: '/classificacao-gru'
@@ -293,6 +325,13 @@ declare module '@tanstack/react-router' {
       path: '/fiscais'
       fullPath: '/fiscais'
       preLoaderRoute: typeof AuthenticatedFiscaisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/homologacao': {
+      id: '/_authenticated/homologacao'
+      path: '/homologacao'
+      fullPath: '/homologacao'
+      preLoaderRoute: typeof AuthenticatedHomologacaoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/importacao': {
@@ -362,11 +401,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdvogadosRoute: typeof AuthenticatedAdvogadosRoute
   AuthenticatedClassificacaoGruRoute: typeof AuthenticatedClassificacaoGruRoute
   AuthenticatedCpmaRoute: typeof AuthenticatedCpmaRoute
   AuthenticatedDividaAtivaRoute: typeof AuthenticatedDividaAtivaRoute
   AuthenticatedEspeciesRoute: typeof AuthenticatedEspeciesRoute
   AuthenticatedFiscaisRoute: typeof AuthenticatedFiscaisRoute
+  AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
   AuthenticatedImportacaoRoute: typeof AuthenticatedImportacaoRoute
   AuthenticatedJulgamentoRoute: typeof AuthenticatedJulgamentoRoute
   AuthenticatedJuridicoRoute: typeof AuthenticatedJuridicoRoute
@@ -379,11 +420,13 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdvogadosRoute: AuthenticatedAdvogadosRoute,
   AuthenticatedClassificacaoGruRoute: AuthenticatedClassificacaoGruRoute,
   AuthenticatedCpmaRoute: AuthenticatedCpmaRoute,
   AuthenticatedDividaAtivaRoute: AuthenticatedDividaAtivaRoute,
   AuthenticatedEspeciesRoute: AuthenticatedEspeciesRoute,
   AuthenticatedFiscaisRoute: AuthenticatedFiscaisRoute,
+  AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
   AuthenticatedImportacaoRoute: AuthenticatedImportacaoRoute,
   AuthenticatedJulgamentoRoute: AuthenticatedJulgamentoRoute,
   AuthenticatedJuridicoRoute: AuthenticatedJuridicoRoute,

@@ -121,7 +121,7 @@ function DetalheProcesso() {
                     ["Julgado por", `${perfis?.get(julgamento.julgador_id) ?? "—"} · ${dataBR(julgamento.julgado_em, true)}`],
                     ["Fundamentação", julgamento.fundamentacao],
                     ["Homologação", julgamento.homologado_em ? `${perfis?.get(julgamento.homologado_por ?? "") ?? "—"} · ${dataBR(julgamento.homologado_em, true)}` : "Pendente"],
-                    ["Assinatura do Presidente", julgamento.assinado_em ? `${perfis?.get(julgamento.assinado_por ?? "") ?? "—"} · ${dataBR(julgamento.assinado_em, true)}` : "Pendente"],
+                    ["Assinatura do Presidente", julgamento.assinatura_data ? `Assinou em ${dataBR(julgamento.assinatura_data)} (registrado por ${perfis?.get(julgamento.assinado_por ?? "") ?? "—"})` : "Pendente"],
                   ]
                 : []),
               ...(gru
@@ -183,8 +183,8 @@ function DetalheProcesso() {
                   Devolver ao {cpmaAtivo ? "CCA" : "CPMA"}
                 </Button>
               )}
-              {juridicoNoSetor && <AcoesJuridico p={p} notificacoes={notificacoes} julgamento={julgamento} gru={gru} />}
-              {p.setor_atual === "JURIDICO" && comSetor && <AcoesJulgamento p={p} julgamento={julgamento} papeis={sessao.papeis} />}
+              {juridicoNoSetor && <AcoesJuridico p={p} notificacoes={notificacoes} />}
+              {p.setor_atual === "JURIDICO" && comSetor && <AcoesJulgamento p={p} julgamento={julgamento} gru={gru} papeis={sessao.papeis} />}
               {ccaAtivo && <Button onClick={() => setDialogo("corrigir")}>Corrigir e reencaminhar ao CPMA</Button>}
               {doSetorAtual && (
                 <Button variant="ghost" onClick={() => setDialogo("obs")}>
@@ -284,9 +284,9 @@ function proxima(p: { situacao: string; digitalizado_em: string | null; fiscal_i
     case "com_defesa":
     case "sem_defesa": return "Aguardando julgamento pelo advogado (decisão, valor da multa e fundamentação). Se chegar uma defesa ainda não julgada, registre-a.";
     case "julgamento_devolvido": return "Devolvido ao julgamento: o advogado da espécie deve rejulgar.";
-    case "julgado": return "Julgado. Aguardando a homologação.";
-    case "homologado": return "Homologado. Aguardando a assinatura do Presidente.";
-    case "assinado_presidente": return "Assinado pelo Presidente. Gerência Jurídica: emita a GRU e registre os dados dela.";
+    case "julgado": return "Julgado. Aguardando a homologação (ou devolução ao julgamento) pelo homologador.";
+    case "homologado": return "Homologado. Homologador: registre a data em que o Presidente assinou (ele assina fora do sistema).";
+    case "assinado_presidente": return "Assinado pelo Presidente. Advogado: emita a GRU e registre os dados dela.";
     case "gru_gerada": return "GRU registrada. Classifique: registrar o pagamento, registrar recurso ou, vencida a GRU sem pagamento, marcar como não pago.";
     case "em_recurso": return "Recurso em análise na instância superior do Inmetro. Registre o pagamento ou, se o recurso não livrar da multa e não houver pagamento, marque como não pago.";
     case "nao_pago": return "Não pago: processo na listagem de dívida ativa para recobrança. Se houver pagamento posterior, registre-o.";

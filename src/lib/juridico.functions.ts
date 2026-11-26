@@ -167,7 +167,7 @@ export const obterEspelhoGruFn = createServerFn({ method: "GET" })
   .handler(async ({ context, data }): Promise<{ processo: Processo; gru: Gru; parametros: Parametro[] } | null> => {
     const { comUsuario } = await import("@/server/db.server");
     const { exigirPapel } = await import("@/server/guarda.server");
-    exigirPapel(context.sessao, "juridico", "gestao");
+    exigirPapel(context.sessao, "advogado", "gestao");
     return comUsuario(context.sessao.id, async (c) => {
       const processo = (await c.query<Processo>("select * from processos where id = $1", [data.processoId])).rows[0];
       const gru = (await c.query<Gru>("select * from grus where processo_id = $1", [data.processoId])).rows[0];
@@ -201,7 +201,7 @@ export const anteciparGruFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { exigirPapel } = await import("@/server/guarda.server");
     const { anteciparGru } = await import("@/server/teste.server");
-    exigirPapel(context.sessao, "juridico");
+    exigirPapel(context.sessao, "advogado");
     await anteciparGru(context.sessao.id, data.processoId, 15);
     return { ok: true as const };
   });

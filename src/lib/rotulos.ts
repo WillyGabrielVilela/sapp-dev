@@ -5,13 +5,15 @@ export type { Papel, Processo, Situacao, SetorTecnico };
 export const PAPEIS: { valor: Papel; rotulo: string }[] = [
   { valor: "cca", rotulo: "CCA" },
   { valor: "cpma", rotulo: "CPMA" },
-  { valor: "juridico", rotulo: "Jurídico" },
-  { valor: "gestao", rotulo: "Gestão" },
-  { valor: "advogado", rotulo: "Advogado" },
-  { valor: "presidente", rotulo: "Presidente" },
+  { valor: "juridico", rotulo: "Jurídico administrativo" },
+  { valor: "advogado", rotulo: "Jurídico — advogado" },
   { valor: "homologador", rotulo: "Homologador" },
+  { valor: "gestao", rotulo: "Gestão" },
   { valor: "admin", rotulo: "Administrador" },
 ];
+
+/** Perfil em desuso: o Presidente não usa o sistema (os homologadores registram a assinatura). Mantido só para exibir contas antigas. */
+export const ROTULO_PRESIDENTE = "Presidente (em desuso)";
 
 export const SITUACAO: Record<Situacao, string> = {
   aguardando_cpma: "Aguardando recebimento (CPMA)",

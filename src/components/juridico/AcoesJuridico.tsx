@@ -7,18 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { anteciparGruFn, anteciparPrazoFn, atualizarDadosFn, encerrarPrazoFn, modoTesteFn, protocolarFn, registrarDefesaFn, registrarGruFn } from "@/lib/juridico.functions";
-import { brl } from "@/components/juridico/AcoesJulgamento";
+import { anteciparPrazoFn, atualizarDadosFn, encerrarPrazoFn, modoTesteFn, protocolarFn, registrarDefesaFn } from "@/lib/juridico.functions";
 import { documentoValido, normalizarDocumento } from "@/lib/documento";
 import { dataBR, erroMsg } from "@/lib/rotulos";
-import type { Gru, Julgamento, Notificacao, Processo } from "@/lib/tipos";
-import { NaoPagoDialog, PagamentoDialog, RecursoDialog, type AlvoGru } from "./ClassificacaoDialogs";
+import type { Notificacao, Processo } from "@/lib/tipos";
 import { hojeISO, ResultadoDialog } from "./ResultadoDialog";
 
-type Dialogo = null | "protocolar" | "dados" | "defesa" | "semdefesa" | "resultado" | "gru" | "pagamento" | "recurso" | "naopago";
+type Dialogo = null | "protocolar" | "dados" | "defesa" | "semdefesa" | "resultado";
 
 /** Providências do Jurídico (fase 1) para o processo aberto: protocolo → notificação → ciência → defesa. */
-export function AcoesJuridico({ p, notificacoes, julgamento, gru }: { p: Processo; notificacoes: Notificacao[]; julgamento: Julgamento | null; gru: Gru | null }) {
+export function AcoesJuridico({ p, notificacoes }: { p: Processo; notificacoes: Notificacao[] }) {
   const qc = useQueryClient();
   const [dialogo, setDialogo] = useState<Dialogo>(null);
   const pendente = notificacoes.find((n) => n.resultado === "pendente");
@@ -28,12 +26,6 @@ export function AcoesJuridico({ p, notificacoes, julgamento, gru }: { p: Process
     fechar();
     await qc.invalidateQueries();
   };
-  const alvo: AlvoGru = { processoId: p.id, numero: p.numero, valor: gru?.valor ?? null, valorComDesconto: gru?.valor_com_desconto ?? null };
-  const anteciparGru = useMutation({
-    mutationFn: () => anteciparGruFn({ data: { processoId: p.id } }),
-    onSuccess: () => depoisDe("Teste: vencimento da GRU recuado em 15 dias"),
-    onError: (e) => toast.error(erroMsg(e)),
-  });
   const { data: modoTeste } = useQuery({ queryKey: ["modo-teste"], queryFn: () => modoTesteFn() });
   const anteciparPrazo = useMutation({
     mutationFn: () => anteciparPrazoFn({ data: { processoId: p.id } }),
@@ -49,18 +41,6 @@ export function AcoesJuridico({ p, notificacoes, julgamento, gru }: { p: Process
         <Button asChild><Link to="/juridico">Incluir em lista de saída</Link></Button>
       )}
       {p.situacao === "notificacao_enviada" && pendente && <Button onClick={() => setDialogo("resultado")}>Registrar entrega</Button>}
-      {p.situacao === "assinado_presidente" && <Button onClick={() => setDialogo("gru")}>Registrar GRU</Button>}
-      {["gru_gerada", "em_recurso", "nao_pago", "pago"].includes(p.situacao) && gru && (
-        <Button asChild variant="outline"><Link to="/espelho-gru/$processoId" params={{ processoId: p.id }}>Ver espelho da GRU</Link></Button>
-      )}
-      {["gru_gerada", "em_recurso", "nao_pago"].includes(p.situacao) && <Button onClick={() => setDialogo("pagamento")}>Registrar pagamento</Button>}
-      {p.situacao === "gru_gerada" && <Button variant="outline" onClick={() => setDialogo("recurso")}>Registrar recurso</Button>}
-      {(p.situacao === "gru_gerada" || p.situacao === "em_recurso") && <Button variant="outline" onClick={() => setDialogo("naopago")}>Classificar como não pago</Button>}
-      {modoTeste && p.situacao === "gru_gerada" && (
-        <Button variant="outline" className="border-dashed border-warning-foreground text-warning-foreground" disabled={anteciparGru.isPending} onClick={() => anteciparGru.mutate()}>
-          🧪 Teste: vencer a GRU (−15 dias)
-        </Button>
-      )}
       {p.situacao === "aguardando_defesa" && <Button variant="outline" onClick={() => setDialogo("semdefesa")}>Registrar sem defesa</Button>}
       {(p.situacao === "aguardando_defesa" || p.situacao === "sem_defesa") && (
         <Button variant={p.situacao === "sem_defesa" ? "outline" : "default"} onClick={() => setDialogo("defesa")}>
@@ -79,10 +59,6 @@ export function AcoesJuridico({ p, notificacoes, julgamento, gru }: { p: Process
       {dialogo === "resultado" && pendente && (
         <ResultadoDialog notificacaoId={pendente.id} canal={pendente.canal} titulo={p.numero} dataSaida={pendente.data_saida} fechar={fechar} />
       )}
-      {dialogo === "pagamento" && <PagamentoDialog alvo={alvo} fechar={fechar} />}
-      {dialogo === "recurso" && <RecursoDialog alvo={alvo} fechar={fechar} />}
-      {dialogo === "naopago" && <NaoPagoDialog alvo={alvo} obrigatoria={p.situacao === "em_recurso"} fechar={fechar} />}
-      {dialogo === "gru" && <GruDialog p={p} julgamento={julgamento} fechar={fechar} depois={depoisDe} />}
       {dialogo === "semdefesa" && <SemDefesaDialog p={p} fechar={fechar} depois={depoisDe} />}
       {dialogo === "defesa" && <DefesaDialog p={p} fechar={fechar} depois={depoisDe} />}
     </>
@@ -192,38 +168,6 @@ function SemDefesaDialog({ p, fechar, depois }: { p: Processo; fechar: () => voi
         <DialogFooter>
           <Button variant="outline" disabled={salvar.isPending} onClick={fechar}>Cancelar</Button>
           <Button disabled={salvar.isPending || (antes && obs.trim().length < 10)} onClick={() => salvar.mutate()}>Registrar sem defesa</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function GruDialog({ p, julgamento, fechar, depois }: { p: Processo; julgamento: Julgamento | null; fechar: () => void; depois: (m: string) => Promise<void> }) {
-  const [numero, setNumero] = useState("");
-  const [venc, setVenc] = useState("");
-  const [obs, setObs] = useState("");
-  const salvar = useMutation({
-    mutationFn: () => registrarGruFn({ data: { processoId: p.id, numeroGru: numero, vencimento: venc, obs } }),
-    onSuccess: () => depois("GRU registrada"),
-    onError: (e) => toast.error(erroMsg(e)),
-  });
-  return (
-    <Dialog open onOpenChange={(o) => !o && !salvar.isPending && fechar()}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Registrar GRU</DialogTitle></DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          <span className="num-processo">{p.numero}</span> · {p.proprietario ?? "—"} · multa de <strong>{brl(julgamento?.valor_multa ?? null)}</strong>
-        </p>
-        <p className="text-xs text-muted-foreground">Emita a guia oficial e registre aqui os dados dela. O valor com desconto à vista é calculado pelo sistema e consta no espelho da GRU.</p>
-        <Label htmlFor="gru-num">Número da GRU</Label>
-        <Input id="gru-num" value={numero} onChange={(e) => setNumero(e.target.value)} />
-        <Label htmlFor="gru-venc">Vencimento</Label>
-        <Input id="gru-venc" type="date" min={hojeISO()} value={venc} onChange={(e) => setVenc(e.target.value)} />
-        <Label htmlFor="gru-obs">Observação (opcional)</Label>
-        <Textarea id="gru-obs" rows={2} value={obs} onChange={(e) => setObs(e.target.value)} />
-        <DialogFooter>
-          <Button variant="outline" disabled={salvar.isPending} onClick={fechar}>Cancelar</Button>
-          <Button disabled={salvar.isPending || numero.trim().length < 3 || !venc} onClick={() => salvar.mutate()}>Registrar GRU</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

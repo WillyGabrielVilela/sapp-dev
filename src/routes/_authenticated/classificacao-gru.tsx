@@ -11,6 +11,8 @@ import { brl } from "@/components/juridico/AcoesJulgamento";
 import { NaoPagoDialog, PagamentoDialog, RecursoDialog, type AlvoGru } from "@/components/juridico/ClassificacaoDialogs";
 import { hojeISO } from "@/components/juridico/ResultadoDialog";
 import { Badge } from "@/components/ui/badge";
+import { BotaoCsv } from "@/components/BotaoCsv";
+import { COLUNAS_GRU } from "@/lib/csv-colunas";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -26,14 +28,14 @@ export const diasAtraso = (venc: string) => Math.floor((Date.parse(hojeISO()) - 
 
 function Classificacao() {
   const { data: sessao } = useSessao();
-  const habilitado = sessao?.tem("juridico", "gestao") ?? false;
+  const habilitado = sessao?.tem("advogado", "gestao") ?? false;
   const { data: linhas = [], isLoading, error } = useQuery({ queryKey: ["classificacao-gru"], enabled: habilitado, queryFn: () => listarClassificacaoGruFn() });
   const [acao, setAcao] = useState<Acao | null>(null);
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [lote, setLote] = useState(false);
   if (!sessao) return null;
   if (!habilitado) return <SemPermissao />;
-  const edita = sessao.tem("juridico");
+  const edita = sessao.tem("advogado");
   const por = (s: LinhaGru["situacao"]) => linhas.filter((l) => l.situacao === s);
   const aClassificar = por("gru_gerada");
   const vencidas = aClassificar.filter((l) => diasAtraso(l.vencimento) > 0);
@@ -61,7 +63,7 @@ function Classificacao() {
                 <Button variant="ghost" onClick={() => setSel(new Set())}>Limpar seleção</Button>
               </div>
             )}
-            <Tabela linhas={aClassificar} vazio="Nenhuma GRU aguardando classificação."
+            <Tabela linhas={aClassificar} csv="gru-a-classificar" vazio="Nenhuma GRU aguardando classificação."
               selecao={edita ? { sel, alternar, todos: (m) => setSel(m ? new Set(aClassificar.map((l) => l.processo_id)) : new Set()) } : undefined}
               acoes={edita ? (l) => (
                 <div className="flex flex-wrap gap-1">
@@ -74,7 +76,7 @@ function Classificacao() {
 
           <section>
             <h2 className="mb-3 font-semibold">Em recurso · instância superior do Inmetro ({por("em_recurso").length})</h2>
-            <Tabela linhas={por("em_recurso")} vazio="Nenhum processo em recurso." extra={(l) => `Recurso em ${dataBR(l.recurso_em)}`}
+            <Tabela linhas={por("em_recurso")} csv="gru-em-recurso" vazio="Nenhum processo em recurso." extra={(l) => `Recurso em ${dataBR(l.recurso_em)}`}
               acoes={edita ? (l) => (
                 <div className="flex flex-wrap gap-1">
                   <Button size="sm" onClick={() => setAcao({ tipo: "pagamento", linha: l })}>Pago</Button>
@@ -85,7 +87,7 @@ function Classificacao() {
 
           <section>
             <h2 className="mb-3 font-semibold">Pagos ({por("pago").length})</h2>
-            <Tabela linhas={por("pago")} vazio="Nenhum pagamento registrado." extra={(l) => `Pago em ${dataBR(l.pago_em)}: ${brl(l.valor_pago)}`} />
+            <Tabela linhas={por("pago")} csv="gru-pagos" vazio="Nenhum pagamento registrado." extra={(l) => `Pago em ${dataBR(l.pago_em)}: ${brl(l.valor_pago)}`} />
           </section>
         </div>
       )}
@@ -107,12 +109,14 @@ function Resumo({ titulo, valor, sub }: { titulo: string; valor: number; sub?: R
   );
 }
 
-function Tabela({ linhas, vazio, acoes, extra, selecao }: {
-  linhas: LinhaGru[]; vazio: string; acoes?: ((l: LinhaGru) => React.ReactNode) | undefined; extra?: ((l: LinhaGru) => string) | undefined;
+function Tabela({ linhas, vazio, csv, acoes, extra, selecao }: {
+  linhas: LinhaGru[]; vazio: string; csv: string; acoes?: ((l: LinhaGru) => React.ReactNode) | undefined; extra?: ((l: LinhaGru) => string) | undefined;
   selecao?: { sel: Set<string>; alternar: (id: string) => void; todos: (marcar: boolean) => void } | undefined;
 }) {
   if (!linhas.length) return <p className="border-t py-4 text-sm text-muted-foreground">{vazio}</p>;
   return (
+    <>
+    <div className="mb-2 flex justify-end"><BotaoCsv nome={csv} colunas={COLUNAS_GRU} linhas={linhas} /></div>
     <div className="tabela-rolavel rounded-md border">
       <table className="w-full text-left text-sm">
         <thead className="bg-muted text-muted-foreground">
@@ -140,6 +144,7 @@ function Tabela({ linhas, vazio, acoes, extra, selecao }: {
         </tbody>
       </table>
     </div>
+    </>
   );
 }
 

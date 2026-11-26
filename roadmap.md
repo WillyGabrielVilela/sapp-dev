@@ -21,3 +21,7 @@
 - [x] Fase 4A: classificação das GRUs (pago / em recurso / não pago) e listagem de dívida ativa para recobrança.
 - [ ] Fase 4B: envio ao autuado (Correios), prazo e resultado do recurso, regras do desconto à vista.
 - [ ] Conferir com o Inmetro o mapeamento SGI (`sgiEsperado`).
+
+## Segregação e exportação
+- [x] Áreas separadas (Jurídico administrativo / advogados / homologação), menu agrupado, assinatura do Presidente registrada pelos homologadores, CSV nas filas.
+- [ ] Validar com o IPEM-PE a divisão de perfis (GRU e classificação com os advogados).

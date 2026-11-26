@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { BotaoCsv } from "@/components/BotaoCsv";
+import { COLUNAS_PROCESSO } from "@/lib/csv-colunas";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Search } from "lucide-react";
@@ -48,23 +50,25 @@ function Painel() {
     add("CPMA · Em conferência e digitalização", (p) => p.setor_atual === "CPMA" && !p.setor_destino);
     add("CPMA · Enviados, aguardando o Jurídico receber", (p) => p.setor_atual === "CPMA" && p.setor_destino === "JURIDICO");
   }
-  if (sessao.tem("advogado")) add("Advogado · A julgar", (p) => p.situacao === "com_defesa" || p.situacao === "sem_defesa" || p.situacao === "julgamento_devolvido");
-  if (sessao.tem("presidente") && !sessao.tem("juridico")) add("Presidência · A assinar", (p) => p.situacao === "homologado");
-  if (sessao.tem("homologador") && !sessao.tem("juridico")) add("Homologação · A homologar", (p) => p.situacao === "julgado");
   if (sessao.tem("juridico")) {
-    add("Jurídico · A receber", (p) => p.setor_destino === "JURIDICO");
-    add("Jurídico · A protocolar", (p) => p.situacao === "recebido_juridico");
-    add("Jurídico · A notificar (protocolados e não entregues)", (p) => p.situacao === "protocolado_juridico" || p.situacao === "notificacao_frustrada");
-    add("Jurídico · Entregas a registrar", (p) => p.situacao === "notificacao_enviada");
-    add("Jurídico · Prazo de defesa correndo", (p) => p.situacao === "aguardando_defesa");
-    add("Jurídico · Aguardando julgamento", (p) => p.situacao === "com_defesa" || p.situacao === "sem_defesa" || p.situacao === "julgamento_devolvido");
-    add("Jurídico · Julgados, aguardando homologação", (p) => p.situacao === "julgado");
-    add("Jurídico · Homologados, aguardando o Presidente", (p) => p.situacao === "homologado");
-    add("Jurídico · A gerar a GRU (assinados pelo Presidente)", (p) => p.situacao === "assinado_presidente");
-    add("Jurídico · GRU registrada, a classificar (pago / recurso / não pago)", (p) => p.situacao === "gru_gerada");
-    add("Jurídico · Em recurso (instância superior do Inmetro)", (p) => p.situacao === "em_recurso");
-    add("Jurídico · Não pagos — dívida ativa para recobrança", (p) => p.situacao === "nao_pago");
-    add("Jurídico · Pagos", (p) => p.situacao === "pago");
+    add("Jurídico administrativo · A receber", (p) => p.setor_destino === "JURIDICO");
+    add("Jurídico administrativo · A protocolar", (p) => p.situacao === "recebido_juridico");
+    add("Jurídico administrativo · A notificar (protocolados e não entregues)", (p) => p.situacao === "protocolado_juridico" || p.situacao === "notificacao_frustrada");
+    add("Jurídico administrativo · Entregas a registrar", (p) => p.situacao === "notificacao_enviada");
+    add("Jurídico administrativo · Prazo de defesa correndo", (p) => p.situacao === "aguardando_defesa");
+    add("Jurídico administrativo · Prontos para julgamento (com os advogados)", (p) => p.situacao === "com_defesa" || p.situacao === "sem_defesa");
+  }
+  if (sessao.tem("advogado")) {
+    add("Advogados · A julgar", (p) => p.situacao === "com_defesa" || p.situacao === "sem_defesa" || p.situacao === "julgamento_devolvido");
+    add("Advogados · A gerar a GRU (assinados pelo Presidente)", (p) => p.situacao === "assinado_presidente");
+    add("Advogados · GRU registrada, a classificar (pago / recurso / não pago)", (p) => p.situacao === "gru_gerada");
+    add("Advogados · Em recurso (instância superior do Inmetro)", (p) => p.situacao === "em_recurso");
+    add("Advogados · Não pagos — dívida ativa para recobrança", (p) => p.situacao === "nao_pago");
+    add("Advogados · Pagos", (p) => p.situacao === "pago");
+  }
+  if (sessao.tem("homologador")) {
+    add("Homologação · A homologar", (p) => p.situacao === "julgado");
+    add("Homologação · Registrar a assinatura do Presidente", (p) => p.situacao === "homologado");
   }
 
   const contagem = (Object.keys(SITUACAO) as (keyof typeof SITUACAO)[]).map((s) => ({
@@ -105,17 +109,23 @@ function Painel() {
       <div className="space-y-8">
         {filas.map((f) => (
           <section key={f.titulo}>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {f.titulo} ({f.itens.length})
-            </h2>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {f.titulo} ({f.itens.length})
+              </h2>
+              <BotaoCsv nome={f.titulo.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-")} colunas={COLUNAS_PROCESSO} linhas={f.itens} />
+            </div>
             <Tabela itens={f.itens} vazio="Fila vazia." />
           </section>
         ))}
         {sessao.tem("gestao") && (
           <section>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Todos os processos ({processos.length})
-            </h2>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Todos os processos ({processos.length})
+              </h2>
+              <BotaoCsv nome="todos-os-processos" colunas={COLUNAS_PROCESSO} linhas={processos} />
+            </div>
             <Tabela itens={processos} vazio="Nenhum processo cadastrado." />
           </section>
         )}

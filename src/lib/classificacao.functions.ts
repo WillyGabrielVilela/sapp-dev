@@ -11,7 +11,7 @@ export const listarClassificacaoGruFn = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<LinhaGru[]> => {
     const { comUsuario } = await import("@/server/db.server");
     const { exigirPapel } = await import("@/server/guarda.server");
-    exigirPapel(context.sessao, "juridico", "gestao");
+    exigirPapel(context.sessao, "advogado", "gestao");
     return comUsuario(context.sessao.id, async (c) =>
       (
         await c.query<LinhaGru>(
@@ -64,6 +64,6 @@ export const classificarNaoPagoLoteFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }): Promise<ResultadoLote> => {
     const { exigirPapel } = await import("@/server/guarda.server");
     const { executarLote } = await import("@/server/lote.server");
-    exigirPapel(context.sessao, "juridico");
+    exigirPapel(context.sessao, "advogado");
     return executarLote(context.sessao.id, data.processoIds, "classificar_nao_pago", data.obs);
   });

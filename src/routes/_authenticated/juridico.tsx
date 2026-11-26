@@ -14,6 +14,8 @@ import { hojeISO } from "@/components/juridico/ResultadoDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { BotaoCsv } from "@/components/BotaoCsv";
+import { COLUNAS_PROCESSO } from "@/lib/csv-colunas";
 
 export const Route = createFileRoute("/_authenticated/juridico")({
   head: () => ({ meta: [
@@ -47,17 +49,13 @@ function Juridico() {
     { titulo: "A notificar · protocolados e notificações não entregues", itens: por("protocolado_juridico", "notificacao_frustrada"), seleciona: true, botao: () => "Abrir processo" },
     { titulo: "Entregas a registrar (notificação enviada)", itens: por("notificacao_enviada"), botao: () => "Registrar entrega" },
     { titulo: "Prazo de defesa correndo (segue sozinho se vencer sem defesa)", itens: por("aguardando_defesa"), botao: () => "Abrir processo" },
-    { titulo: "Com defesa ou sem defesa · aguardando julgamento dos advogados", itens: por("com_defesa", "sem_defesa", "julgamento_devolvido", "julgado", "homologado"), botao: () => "Abrir processo" },
-    { titulo: "A gerar a GRU (assinados pelo Presidente)", itens: por("assinado_presidente"), botao: () => "Registrar GRU" },
-    { titulo: "GRU registrada · a classificar (pago, recurso ou não pago)", itens: por("gru_gerada"), botao: () => "Classificar" },
-    { titulo: "Em recurso · instância superior do Inmetro", itens: por("em_recurso"), botao: () => "Abrir processo" },
-    { titulo: "Não pagos · dívida ativa para recobrança", itens: por("nao_pago"), botao: () => "Abrir processo" },
+    { titulo: "Prontos para julgamento · já com os advogados (com ou sem defesa)", itens: por("com_defesa", "sem_defesa"), botao: () => "Abrir processo" },
   ];
   const termo = busca.trim().toLocaleLowerCase("pt-BR");
   const casa = (p: Processo) => !termo || p.numero.includes(termo) || (p.numero_ai ?? "").includes(termo) || (p.proprietario ?? "").toLocaleLowerCase("pt-BR").includes(termo);
 
   return <>
-    <Cabecalho titulo="Jurídico" sub="Protocolo → notificação → ciência → prazo de defesa (a classificação das GRUs tem página própria: GRUs pago / recurso / não pago)" />
+    <Cabecalho titulo="Jurídico administrativo" sub="Receber, protocolar, notificar e acompanhar o prazo de defesa. Do julgamento em diante, o trabalho é dos advogados." />
     <Input className="mb-6 max-w-xl" aria-label="Buscar processo no Jurídico" placeholder="Buscar por nº do processo, nº do AI ou nome do autuado" value={busca} onChange={(e) => setBusca(e.target.value)} />
     {error ? <p role="alert" className="text-destructive">Não foi possível carregar os processos.</p> : isLoading ? <p className="text-muted-foreground">Carregando processos…</p> :
       <div className="space-y-8">
@@ -97,7 +95,10 @@ function FilaTabela({ fila, visiveis, papeis }: { fila: Fila; visiveis: Processo
   const marcados = visiveis.filter((p) => sel.has(p.id));
   const alternar = (id: string) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   return <section>
-    <h2 className="mb-3 font-semibold">{fila.titulo} ({visiveis.length})</h2>
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <h2 className="font-semibold">{fila.titulo} ({visiveis.length})</h2>
+      <BotaoCsv nome={fila.titulo.split(" ·")[0]!.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-")} colunas={COLUNAS_PROCESSO} linhas={visiveis} />
+    </div>
     {fila.seleciona && marcados.length > 0 && (
       <div className="mb-3 flex flex-wrap items-end gap-3 rounded-lg border bg-card p-3 text-sm">
         <span className="font-medium">{marcados.length} selecionado(s)</span>

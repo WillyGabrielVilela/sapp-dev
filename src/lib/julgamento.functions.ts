@@ -33,12 +33,13 @@ export const julgarFn = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** O Presidente não usa o sistema: o homologador registra que ele assinou (data da assinatura). */
 export const assinarFn = createServerFn({ method: "POST" })
   .middleware([exigirSessao])
-  .inputValidator(z.object({ processoId: ID, obs: z.string().max(2000) }))
+  .inputValidator(z.object({ processoId: ID, obs: z.string().max(2000), data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }))
   .handler(async ({ context, data }) => {
     const { comUsuario } = await import("@/server/db.server");
-    await comUsuario(context.sessao.id, (c) => c.query("select assinar_presidente($1, $2)", [data.processoId, data.obs]));
+    await comUsuario(context.sessao.id, (c) => c.query("select assinar_presidente($1, $2, $3::date)", [data.processoId, data.obs, data.data]));
     return { ok: true as const };
   });
 
@@ -91,7 +92,7 @@ export const definirEspeciesJulgadorFn = createServerFn({ method: "POST" })
   });
 
 // ---------- ações em lote (checkboxes) ----------
-const LOTE = z.object({ processoIds: z.array(ID).min(1).max(200), obs: z.string().max(2000) });
+const LOTE = z.object({ processoIds: z.array(ID).min(1).max(200), obs: z.string().max(2000), data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() });
 
 export const homologarLoteFn = createServerFn({ method: "POST" })
   .middleware([exigirSessao])
@@ -109,6 +110,6 @@ export const assinarLoteFn = createServerFn({ method: "POST" })
   .handler(async ({ context, data }): Promise<ResultadoLote> => {
     const { exigirPapel } = await import("@/server/guarda.server");
     const { executarLote } = await import("@/server/lote.server");
-    exigirPapel(context.sessao, "presidente");
-    return executarLote(context.sessao.id, data.processoIds, "assinar_presidente", data.obs);
+    exigirPapel(context.sessao, "homologador");
+    return executarLote(context.sessao.id, data.processoIds, "assinar_presidente", data.obs, data.data);
   });

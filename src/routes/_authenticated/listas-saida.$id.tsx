@@ -10,6 +10,8 @@ import type { ItemLista } from "@/lib/tipos";
 import { Cabecalho, SemPermissao } from "@/components/AppShell";
 import { ResultadoDialog } from "@/components/juridico/ResultadoDialog";
 import { Button } from "@/components/ui/button";
+import { BotaoCsv } from "@/components/BotaoCsv";
+import { COLUNAS_LISTA } from "@/lib/csv-colunas";
 
 export const Route = createFileRoute("/_authenticated/listas-saida/$id")({
   head: () => ({ meta: [{ title: "Lista de saída — SAPP" }, { name: "description", content: "Lista de saída de notificações do Jurídico, com conferência das entregas." }] }),
@@ -37,6 +39,7 @@ function ListaSaidaPagina() {
       </Link>
       <div className="print:hidden">
         <Cabecalho titulo={titulo} sub={`${CANAL[lista.canal]}${lista.titulo ? ` · ${lista.titulo}` : ""} · ${itens.length} item(ns), ${pendentes} sem desfecho`}>
+          <BotaoCsv nome={`lista-saida-${lista.data}-n${lista.numero_dia}`} colunas={COLUNAS_LISTA} linhas={itens} />
           <Button variant="outline" onClick={() => window.print()}><Printer /> Imprimir</Button>
         </Cabecalho>
       </div>

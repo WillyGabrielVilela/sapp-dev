@@ -19,11 +19,11 @@ function EspelhoGru() {
   const { data: sessao } = useSessao();
   const { data, isLoading } = useQuery({
     queryKey: ["espelho-gru", processoId],
-    enabled: sessao?.tem("juridico", "gestao") ?? false,
+    enabled: sessao?.tem("advogado", "gestao") ?? false,
     queryFn: () => obterEspelhoGruFn({ data: { processoId } }),
   });
   if (!sessao) return null;
-  if (!sessao.tem("juridico", "gestao")) return <SemPermissao />;
+  if (!sessao.tem("advogado", "gestao")) return <SemPermissao />;
   if (isLoading) return null;
   if (!data) return <p className="text-sm text-muted-foreground">GRU não encontrada para este processo.</p>;
   const { processo: p, gru, parametros } = data;
